@@ -10,9 +10,9 @@
 | 🔄 En cours | 0 |
 | ⏳ À faire | 0 |
 | 🚫 Bloquées | 0 |
-| **Total** | **14** |
+| **Total** | **15** |
 
-**Progression moyenne : 100 %** · **Score santé projet : 70/100** (AUDIT-001 · 0 CRITIQUE · AUDIT-002 pending) · **Dette : 15 items — 11 TRAITÉ · 2 EN COURS · 1 REPORTÉ · 1 ACCEPTÉE**
+**Progression moyenne : 100 %** · **Score santé projet : 77/100** (AUDIT-002 · 0 CRITIQUE · verdict AUTORISÉ SOUS CONDITION — conditions faisables soldées, Task 21-bis) · **Dette : 21 items — 13 TRAITÉ · 3 EN COURS · 1 REPORTÉ · 1 ACCEPTÉE · 3 OUVERTS (018, 019, 021)**
 
 ## Tâches
 
@@ -32,6 +32,7 @@
 | TASK-012 | PRODUIT | DevOS — Assistant vocal proactif | M6 — AIOrchestrator LLM + fallback templates | Backend+Sécurité | ✅ TERMINÉ | 100% | P1 | test-voice ia/template + fallback 429 (AC-012) | ✅ PASS |
 | TASK-013 | PRODUIT | DevOS — Assistant vocal proactif | M7 — Sync + ADR arrière-plan Android/Linux (documenté) | TechLead+Doc | ✅ TERMINÉ | 100% | P1 | Revue documentaire ADR-001 | ✅ N/A justifié (AC-011, hors sandbox) |
 | TASK-014 | PRODUIT | DevOS — Assistant vocal proactif | Phase 5/6 — E2E navigateur + journaux + commits | QA+DOC+COMMIT | ✅ TERMINÉ | 100% | P1 | E2E agent-browser + validate xlsx | ✅ PASS |
+| TASK-015 | PRODUIT | DevOS — Authentification (FEATURE-AUTH, Task 22) | Système auth JWT/bcrypt + scopage multi-utilisateurs intégral (schéma, 11 endpoints, scheduler par user, AuthGate UI, ADR-003) | ORCHESTRATEUR (CTO) | ✅ TERMINÉ | 100% | P1 | 18 tests curl (isolation inter-users incluse) + E2E navigateur (inscription→app→déconnexion→connexion) | ✅ PASS · lint 0 · ADR-003 · contrats v1.1 |
 
 ## Règles de dépendance rappelées
 - Frontend bloqué tant que contrat API non validé (`API_CONTRACTS.md`)
@@ -39,4 +40,4 @@
 - Aucune tâche TERMINÉE sans : commits propres + revue positive ; frontend : + a11y + perf
 - Aucune livraison PROD sans audit global ≥ 60/100
 
-> Prochaine étape : **AUDIT-002** (Task 21) — revue globale post-FEATURE-001 avant toute mise en prod réelle.
+> Prochaine étape : **AUDIT-003** (déclenché par la livraison FEATURE-AUTH, règle « audit après chaque feature ») — vérifier notamment ADR-003, contrats v1.1, DEBT-021 et le scopage multi-utilisateurs.
