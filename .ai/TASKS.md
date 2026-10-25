@@ -6,13 +6,13 @@
 
 | Statut | Nombre |
 |---|---|
-| ✅ Terminées | 16 |
+| ✅ Terminées | 17 |
 | 🔄 En cours | 0 |
 | ⏳ À faire | 0 |
 | 🚫 Bloquées | 0 |
-| **Total** | **16** |
+| **Total** | **17** |
 
-**Progression moyenne : 100 %** · **Score santé projet : 77/100** (AUDIT-003 · 0 CRITIQUE · verdict AUTORISÉ SOUS CONDITION — conditions n°1 DEBT-022 et DEBT-019 soldées immédiatement, Task 24-ter/24-quater) · **Dette : 22 items — 14 TRAITÉ · 3 EN COURS · 1 REPORTÉ · 1 ACCEPTÉE · 3 OUVERTS (018, 021)**
+**Progression moyenne : 100 %** · **Score santé projet : 77/100** (AUDIT-003 · 0 CRITIQUE · verdict AUTORISÉ SOUS CONDITION — **toutes conditions soldées** : DEBT-022/019 (Task 24-ter/quater), DEBT-013 CSP + DEBT-021 rate limiting (Task 26, commits db13a8b/88f334f), REV-004 APPROUVÉE (Task 27)) · **Dette : 22 items — 17 TRAITÉ · 2 EN COURS · 1 REPORTÉ · 1 ACCEPTÉE · 1 OUVERT (018)** *(correction arithmétique : ligne antérieure « 14 TRAITÉ » erronée — décompte vérifié 17)*
 
 ## Tâches
 
@@ -34,6 +34,7 @@
 | TASK-014 | PRODUIT | DevOS — Assistant vocal proactif | Phase 5/6 — E2E navigateur + journaux + commits | QA+DOC+COMMIT | ✅ TERMINÉ | 100% | P1 | E2E agent-browser + validate xlsx | ✅ PASS |
 | TASK-015 | PRODUIT | DevOS — Authentification (FEATURE-AUTH, Task 22) | Système auth JWT/bcrypt + scopage multi-utilisateurs intégral (schéma, 11 endpoints, scheduler par user, AuthGate UI, ADR-003) | ORCHESTRATEUR (CTO) | ✅ TERMINÉ | 100% | P1 | 18 tests curl (isolation inter-users incluse) + E2E navigateur (inscription→app→déconnexion→connexion) | ✅ PASS · lint 0 · ADR-003 · contrats v1.1 |
 | TASK-016 | PRODUIT | DevOS — Authentification (FEATURE-AUTH, Task 24) | AUDIT GLOBAL #003 post-FEATURE-AUTH + preuve E2E compte (Task 23) + soldes immédiats DEBT-022/019 (Task 24-ter/24-quater) | Audit Global + CTO | ✅ TERMINÉ | 100% | P1 | lint 0 · tsc 2→0 · bun audit 0 CRITIQUE · 24 vérifications curl auth + isolation ×2 · E2E navigateur inscription→reconnexion | ✅ PASS · 77/100 stable · AUTORISÉ SOUS CONDITION · sécurité +16 (78) |
+| TASK-017 | PRODUIT | DevOS — Authentification (FEATURE-AUTH, Task 26) | Durcissement sécurité pré-prod : rate limiting DEBT-021 + CSP DEBT-013 + revue indépendante REV-004 (Task 27) | ORCHESTRATEUR (CTO) + AGENT REVIEWER | ✅ TERMINÉ | 100% | P1 | Saturation curl 429 + Retry-After (login 10/15 min, register 5/h) · navigation complète 0 violation CSP · lint 0 · tsc 0 | ✅ PASS · REV-004 APPROUVÉE (0 bloquant/majeur, 4 mineurs tracés) · commits 88f334f, db13a8b |
 
 ## Règles de dépendance rappelées
 - Frontend bloqué tant que contrat API non validé (`API_CONTRACTS.md`)
@@ -41,4 +42,4 @@
 - Aucune tâche TERMINÉE sans : commits propres + revue positive ; frontend : + a11y + perf
 - Aucune livraison PROD sans audit global ≥ 60/100
 
-> Prochaine étape : **plan d'action AUDIT-003** — REV-004 rétrospective FEATURE-AUTH (Review), màj doc ARCHITECTURE/API_CONTRACTS/TEAM_STATUS (DEBT-018), vague 2 ESLint (DEBT-003), découpage UI + h1 AuthGate (DEBT-017) ; avant toute exposition prod réelle : CSP (DEBT-013) + rate limiting /api/auth/* (DEBT-021) + purge des 6 comptes de démonstration (DEBT-020) ; **AUDIT-004** après la prochaine feature ou avant toute exposition prod.
+> Prochaine étape : restant **avant toute exposition prod réelle** — DEBT-020 (purge des 6 comptes de démonstration) + verrouillage accès direct :3000 hors passerelle (mineur REV-004) ; itération suivante : DEBT-018 (doc gouvernance), DEBT-003 vague 2 ESLint, DEBT-017 découpage UI + h1 AuthGate ; **AUDIT-004** après la prochaine feature ou avant toute exposition prod.

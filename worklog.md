@@ -361,3 +361,47 @@ Stage Summary:
 - **Verdict : ✅ AUTORISÉ SOUS CONDITION** — conditions : (1) seed réparé + tsc 0 erreur avant tout nouveau commit de feature ; (2) avant exposition prod réelle : CSP (013) + rate limiting /api/auth/* (021) + purge des 6 comptes de démonstration (020)
 - FEATURE-AUTH jugée **conforme ADR-003/contrats v1.1** sur toute la chaîne audité — isolation inter-users prouvée 2× indépendamment ; scheduler intègre (idempotence, zéro rattrapage, AC-007, anti-frénésie par user, IA = faits)
 - Conformité 87 % (inchangée mais composition dégradée : API-FIRST et REVUE rétrocadées PARTIEL) ; dette 22 items (13 T / 3 EC / 1 R / 1 A / 4 O) ; plan d'action 8 actions transmis ; AUDIT-004 après la prochaine feature ou avant toute exposition prod
+---
+Task ID: 27
+Agent: AGENT REVIEWER
+Task: REV-004 — revue indépendante FEATURE-AUTH + durcissement sécurité (rate limiting, CSP)
+
+Work Log:
+- Contexte lu AVANT travail : worklog (Tasks 22→24), REVIEW_LOG (REV-001→003, format respecté), ADR-003, API_CONTRACTS §auth v1.1, AUDIT-003 (constats recoupés), REQUIREMENTS
+- Lecture ligne à ligne : src/lib/auth.ts (119 l.), 4 routes /api/auth/*, src/lib/rate-limit.ts (71 l.), src/lib/api-helpers.ts, next.config.ts (CSP), prisma/schema.prisma, src/lib/assistant/scheduler.ts (477 l.), src/hooks/use-session.ts, auth-gate.tsx (297 l.), dev-os-app.tsx (243 l.), tasks/[id]/route.ts, voice-preferences/route.ts, snooze (extrait), scripts/seed.ts
+- GATES : `bun run lint` → exit 0 ; `bunx tsc --noEmit` → exit 0 (seed réparé, DEBT-022 close, condition n°1 AUDIT-003 soldée) ; git log -6 + git show --stat → 4 commits vérifiés atomiques (88f334f=4 fichiers limiteur, db13a8b=1 fichier CSP, efae4e6=1 fichier seed, 67897bf=21 fichiers auth cohérents)
+- Runtime : curl -sI / → 200 + CSP (9 directives) + X-Frame-Options DENY + nosniff + Referrer-Policy strict-origin-when-cross-origin + Permissions-Policy (microphone/camera/geolocation=()) + X-DNS-Prefetch-Control off + X-Powered-By ABSENT ; curl /api/health → {"status":"ok","db":"ok",time,version}
+- ⚠️ THROTTLE Task 26 RESPECTÉ : exactement 2 appels auth — (1) 23:10:15 UTC POST login erroné → **429 + retry-after: 643** (fenêtre fixe 15 min posée ~23:05:32, reset ~23:20:58 = saturation 23:05-23:10 toujours active, comportement 429 correct) ; (2) re-lecture du corps → {"error":"Trop de tentatives de connexion — réessayez dans quelques minutes."} = contrat { error } PROUVÉ ; aucun re-saturation (fenêtre fixe : les appels au-delà de la limite ne prolongent pas resetAt — rate-limit.ts:57-69)
+- Portée limiteur vérifiée : branché UNIQUEMENT sur register/login (rg → 4 fichiers, aucun autre endpoint), AVANT tout traitement/Zod/DB (register:35-45, login:36-46), clés `login|register:<ip>`, purge seuil 5000 (rate-limit.ts:24,48-54), 429 uniforme + Retry-After (api-helpers:13-17)
+- CSP vs code réel : rg "http" src/ public/ → uniquement namespaces SVG xmlns (logo.svg, non réseau) ; aucune ressource externe ; worker-src/manifest-src absentes mais retombent sur script-src/default-src 'self' ; 'unsafe-inline'/'unsafe-eval' documentés et justifiés (next.config.ts:4-9 — 0 middleware, ADR-003) ; frame-ancestors 'none' ↔ XFO DENY alignés, observés live
+- AUTH/produit vérifiés en code : bcrypt coût 10 (auth.ts:24), HS256 épinglé (:75), TTL 7 j (:23), secret ≥32 env-only (:33-39), dummy hash réel (:31,52-59), cookie httpOnly/Lax/Secure-prod (:109-117), 404 générique inter-users (tasks/[id]:42-45,78-81 ; snooze:37-41), AC-007 (scheduler.ts:182), zéro rattrapage (:185-198), anti-frénésie par utilisateur (:357-364), LLM = faits + privacyMode (:424-437), purge miroir localStorage aux 3 transitions (auth-gate.tsx:37-43,246-276), 401 → signOutLocal (use-session.ts:77-79, use-voice-assistant.ts:125-128), middleware.ts ABSENT
+- AUCUN fichier applicatif modifié, AUCUN commit ; écritures limitées à .ai/REVIEW_LOG.md (ligne REV-004) + worklog.md (cette section)
+
+Stage Summary:
+- **Verdict REV-004 : ✅ APPROUVÉ** — 0 bloquant, 0 majeur, 4 mineurs, 2 remarques (détail dans REVIEW_LOG.md)
+- FEATURE-AUTH conforme ADR-003/contrat v1.1 ; règles produit INTACTES post-scopage (AC-007, zéro rattrapage, intégrité IA, anti-frénésie par utilisateur, scheduler indépendant de l'IA)
+- Rate limiting (DEBT-021) conforme : preuve live sous throttle actif (429 + Retry-After 643 + { error }) ; CSP (DEBT-013) conforme : headers observés live, cohérence code↔directives vérifiée ; commits atomiques
+- Mineurs tracés (avant exposition réelle) : (1) bypass XFF possible en accès DIRECT :3000 hors passerelle Caddy (via passerelle :81, Caddyfile:9/18 ÉCRASE XFF avec remote_host → fiable dans la posture actuelle ; repli 'local' agrège les clients sans XFF) → verrouiller (bind localhost ou rate_limit Caddy) ; (2) Map du limiteur non plafonnée si >5000 clés vivantes/fenêtre ; (3) mdp démo en clair scripts/seed.ts:28 (purge DEBT-020) ; (4) AuthGate sans h1 (hérité AUDIT-003, plan #6)
+- Remarques : 409 register = trade-off documenté contrat v1.1 (AUTHORITATIF) ; **section worklog Task 26 absente à l'heure de la revue** (preuves du throttle dans le message de commit 88f334f) — à compléter par l'auteur Task 26/orchestrateur
+
+---
+Task ID: 26 + 28
+Agent: ORCHESTRATEUR PRINCIPAL (CTO)
+Task: Exigence CTO « lance une évolution (rate limiting, CSP et REV-004) » — durcissement sécurité pré-prod (DEBT-021/013) + clôture gouvernance
+
+Work Log:
+- Analyse préalable : next.config.ts (headers existants, CSP « reportée » documentée AUDIT-002), routes auth (Zod strict, messages génériques), api-helpers (contrat { error }), use-session/apiFetch (propagation des messages 429 → UI sans changement client), fonts self-hostées next/font/google, 0 asset externe (rg http src/ public/ → xmlns SVG uniquement)
+- **Task 26-b — Rate limiting (DEBT-021)** : src/lib/rate-limit.ts (fenêtre fixe mémoire, Map + purge paresseuse au seuil 5 000, clientIp = 1ᵉʳ saut x-forwarded-for repli « local ») ; api-helpers.rateLimitedResponse (429 uniforme { error } + Retry-After) ; branchement login (10/15 min/IP) et register (5/h/IP) AVANT tout traitement ; portée mono-processus documentée en en-tête
+- Preuves saturation (curl, 23:05-23:10 UTC) : login essais 1-9 → 401, essai 10 → **429** (le 1ᵉʳ succès navigateur de la campagne CSP comptait comme 1ᵉʳ tentative — 10 autorisées au total, cohérence exacte) ; register essais 1-5 → 400 (payloads invalides comptés), essai 6 → **429** ; 429 = HTTP/1.1 + `retry-after: 877` + {"error":"Trop de tentatives de connexion — réessayez dans quelques minutes."} ; périmètre prouvé : /api/tasks → 401 (pas 429), /api/health → 200 sous throttle actif
+- **Task 26-c — CSP (DEBT-013)** : next.config.ts — 9 directives (default-src 'self' ; script-src 'self' 'unsafe-inline' 'unsafe-eval' justifiés en tête de fichier : bootstrap Next, nonce exigerait un middleware = posture 0 middleware ADR-003, resserrage différé ; style 'unsafe-inline' Radix/shadcn ; img/font/connect 'self' ; object-src 'none' ; base-uri/form-action 'self' ; frame-ancestors 'none') + X-Frame-Options SAMEORIGIN→DENY aligné
+- Preuves CSP : `curl -sI /` → header Content-Security-Policy complet + XFO DENY + nosniff + X-Powered-By absent ; Next auto-restart sur config change (dev.log « Found a change in next.config.ts. Restarting… ») ; navigation agent-browser complète AuthGate → connexion David Renard → onglets Assistant/Paramètres/Tâches → déconnexion : **0 violation CSP console, 0 erreur de page, HMR connecté** (connect-src 'self' couvre le ws même origine)
+- Gates : bun run lint exit 0 · bunx tsc --noEmit exit 0
+- Commits atomiques : `88f334f` feat(security) rate limiting (4 fichiers) · `db13a8b` chore(security) CSP (1 fichier)
+- **Task 27 — REV-004** déléguée à l'AGENT REVIEWER indépendant (voir section Task 27) : **✅ APPROUVÉE**, 0 bloquant · 0 majeur · 4 mineurs tracés
+- **Task 28 — Gouvernance** : DEBT-013 et DEBT-021 → TRAITÉ (résiduels REV-004 documentés dans les statuts) ; **correction arithmétique explicite** : la ligne « 14 TRAITÉ » des stats était erronée (15 réels après soldes 019/022, **17** après 013/021) — corrigée dans DEBT_REPORT, TASKS.md, TASKS.xlsx ; TASKS.xlsx TASK-017 insérée (TOTAL 17 tâches 100 %, STATISTIQUES plages 5:21) — pipeline xlsx : recalc 0/6 · audit 0 · scan 0 · **validate passed** ; AUDIT_REPORT.md : « État des conditions » (toutes soldées sauf DEBT-020 + verrou XFF) + focus AUDIT-004 ; CHANGELOG 0.5.0-security-hardening
+- Remarque reviewer traitée : section Task 26 absente à l'heure de REV-004 — présente dès cette entrée (les preuves throttle y sont désormais consignées)
+
+Stage Summary:
+- **Durcissement sécurité pré-prod livré et révisé** : rate limiting (DEBT-021 ✅) + CSP (DEBT-013 ✅) + REV-004 APPROUVÉE — toutes les conditions du verdict AUDIT-003 sont désormais soldées
+- Restant avant toute exposition prod réelle : DEBT-020 (purge des 6 comptes de démonstration) + verrouillage accès direct :3000 hors passerelle (mineur REV-004 n°1) ; EN COURS : DEBT-003 vague 2, DEBT-017 découpage UI + h1 AuthGate ; OUVERT : DEBT-018 (doc)
+- Registre dette : 22 items — **17 TRAITÉ · 2 EN COURS · 1 REPORTÉ · 1 ACCEPTÉE · 1 OUVERT** · TASKS : **17/17 — 100 %** · prochain audit : **AUDIT-004** après la prochaine feature ou avant toute exposition prod

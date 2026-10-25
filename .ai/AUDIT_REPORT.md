@@ -32,6 +32,11 @@
 >   1. **Avant tout nouveau commit de feature** : gate vert — réparer `scripts/seed.ts` (4 × TS2322 propriété `user` manquante) → `bunx tsc --noEmit` 0 erreur (DEBT-022).
 >   2. **Avant toute mise en production réelle/exposée** : CSP finalisée et testée (DEBT-013) · rate limiting /api/auth/* (DEBT-021) · purge des 6 comptes de démonstration documentés (alice/bob/carol, david.renard, audit-×2 — DEBT-020).
 > - Fortement recommandé (non bloquant) : REV-004 rétrospective FEATURE-AUTH, mise à jour doc gouvernance (ARCHITECTURE.md, TASKS.md stats, TEAM_STATUS, COMMIT_LOG), ESLint vague 2, découpage des 2 composants > 500 lignes, h1 sur AuthGate.
+>
+> **État des conditions et recommandations (séance Task 26/27/28, post-audit)** :
+> - Condition 1 (seed/tsc, DEBT-022) → ✅ **SOLDÉE** (commit `efae4e6`, `bunx tsc --noEmit` exit 0, Task 24-ter)
+> - Condition 2 : CSP (DEBT-013) → ✅ **SOLDÉE** (`db13a8b`, testée navigateur 0 violation) · rate limiting (DEBT-021) → ✅ **SOLDÉE** (`88f334f`, preuves 429 + Retry-After) · purge des comptes de démonstration (DEBT-020) → ⏳ **RESTANTE avant exposition**
+> - Recommandation REV-004 → ✅ **EXÉCUTÉE et APPROUVÉE** (Agent Reviewer indépendant, Task 27 — 0 bloquant, 0 majeur, 4 mineurs tracés : XFF accès direct :3000, Map limiteur > 5 000, mdp démo seed, h1 AuthGate)
 
 ## Rapport complet
 
@@ -39,4 +44,4 @@
 
 ## Prochain audit
 - **Déclencheur** : AUDIT-004 après la prochaine feature terminée, ou **avant toute exposition production réelle** si elle survient avant.
-- **Focus** : gate tsc vert (DEBT-022) + REV-004 exécutée ; CSP/rate limiting si exposition programmée ; registre dette 022 ; montée des tests automatisés si le verrou d'environnement est levé ; recomposition des scores (sécurité vs qualité/protocole).
+- **Focus** : vérifier le durcissement sécurité livré (rate limiting 88f334f + CSP db13a8b + REV-004 APPROUVÉE) et les mineurs REV-004 (XFF accès direct, h1 AuthGate) ; DEBT-020 purge avant exposition ; vague 2 ESLint / découpage UI / doc gouvernance (DEBT-018) ; registre dette post-nettoyage ; montée des tests automatisés si le verrou d'environnement est levé ; recomposition des scores (sécurité vs qualité/protocole).

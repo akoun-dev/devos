@@ -20,6 +20,8 @@ Format : Hash | Type | Message | Fichiers | Atomicité (OK/KO) | Validation pre-
 | `e22aee5` | docs(governance) | FEATURE-AUTH — ADR-003, contrats API v1.1, TASK-015, DEBT-021 | OK (1 préoccupation : gouvernance) | n/a (docs) | 2026-10-25 |
 | `66323b4` | chore(governance) | TASKS.xlsx TASK-015 + worklog Task 22 (FEATURE-AUTH) | OK (1 préoccupation : gouvernance) | validate xlsx reload OK | 2026-10-25 |
 | `efae4e6` | fix(seed) | Adaptation du seed au schéma multi-utilisateurs FEATURE-AUTH (DEBT-022) — user démo + userId propagés | OK (1 préoccupation : seed) | lint OK · tsc 0 · seed exit 0 | 2026-10-25 |
+| `88f334f` | feat(security) | Rate limiting mémoire sur /api/auth/register et /api/auth/login (DEBT-021) — 10/15 min login, 5/h register, 429 uniforme + Retry-After | OK (1 préoccupation : sécurité auth) | saturation curl prouvée (429 + Retry-After 877) · métier non affecté · lint OK | 2026-10-25 |
+| `db13a8b` | chore(security) | CSP finalisée et testée + X-Frame-Options DENY (DEBT-013) — 9 directives, compromis documentés | OK (1 préoccupation : headers sécurité) | navigation complète 0 violation CSP · header live curl · lint OK | 2026-10-25 |
 
 ### Commits auto « sauvegarde d'environnement » (consignation DEBT-019, Task 24-quater)
 Commits à message UUID générés automatiquement par l'environnement de développement (auto-sauvegarde), hors contrôle conventionnel des agents — consignés ici pour traçabilité complète de l'historique :
