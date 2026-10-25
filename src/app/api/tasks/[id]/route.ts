@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { errorResponse, readJsonBody, zodErrorMessage } from "@/lib/api-helpers";
+import { getSessionUser } from "@/lib/auth";
 import { serializeTask } from "@/lib/serialize";
 
 export const dynamic = "force-dynamic";
@@ -22,9 +23,13 @@ const patchTaskSchema = z
 
 type RouteContext = { params: Promise<{ id: string }> };
 
-/** PATCH /api/tasks/[id] — mise à jour partielle (statut ∈ en_cours|terminee|annulee). */
+/** PATCH /api/tasks/[id] — mise à jour partielle (statut ∈ en_cours|terminee|annulee). Tâche de l'utilisateur uniquement. */
 export async function PATCH(request: NextRequest, context: RouteContext) {
   try {
+    const user = await getSessionUser();
+    if (!user) {
+      return errorResponse("Authentification requise", 401);
+    }
     const { id } = await context.params;
     const body = await readJsonBody(request);
     const parsed = patchTaskSchema.safeParse(body);
@@ -34,7 +39,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     if (Object.keys(parsed.data).length === 0) {
       return errorResponse("Aucun champ fourni", 400);
     }
-    const existing = await db.task.findUnique({ where: { id } });
+    const existing = await db.task.findFirst({ where: { id, userId: user.id } });
     if (!existing) {
       return errorResponse("Tâche introuvable", 404);
     }
@@ -62,11 +67,15 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
   }
 }
 
-/** DELETE /api/tasks/[id] — suppression (les ReminderLog liés sont supprimés en cascade). */
+/** DELETE /api/tasks/[id] — suppression (les ReminderLog liés sont supprimés en cascade). Tâche de l'utilisateur uniquement. */
 export async function DELETE(_request: NextRequest, context: RouteContext) {
   try {
+    const user = await getSessionUser();
+    if (!user) {
+      return errorResponse("Authentification requise", 401);
+    }
     const { id } = await context.params;
-    const existing = await db.task.findUnique({ where: { id } });
+    const existing = await db.task.findFirst({ where: { id, userId: user.id } });
     if (!existing) {
       return errorResponse("Tâche introuvable", 404);
     }

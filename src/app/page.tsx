@@ -1,5 +1,5 @@
-import { DevOSApp } from "@/components/assistant/dev-os-app";
+import { AuthGate } from "@/components/assistant/auth-gate";
 
 export default function Home() {
-  return <DevOSApp />;
+  return <AuthGate />;
 }

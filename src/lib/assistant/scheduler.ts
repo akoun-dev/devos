@@ -4,7 +4,8 @@
  * Deux couches :
  *  - `computeTick(now, prefs, tasks, recentLogs)` : PUR et testable. Détermine les
  *    décisions du tick (annonces + expires) et le filtrage silencieux, SANS persister.
- *  - `runTick(now)` : orchestration — charge les données, applique les décisions,
+ *  - `runTick(now, userId)` : orchestration — charge les données DE L'UTILISATEUR
+ *    (scopage multi-utilisateurs, FEATURE-AUTH), applique les décisions,
  *    déduplique via ReminderLog (contrainte DB @@unique(taskId,type,scheduledFor)),
  *    tente la reformulation LLM (optionnelle, ADR-002) et persiste.
  *
@@ -312,15 +313,15 @@ export function resolveExisting(existing: ReminderLog | undefined, now: Date): R
 
 // ─── Persistance (orchestration) ──────────────────────────────────────────────
 
-/** Singleton VoicePreferences (id="default"), créé si absent. */
-export async function getOrCreatePreferences(): Promise<VoicePreferences> {
-  const existing = await db.voicePreferences.findUnique({ where: { id: "default" } });
+/** Préférences vocales de l'utilisateur (créées avec les défauts si absentes). */
+export async function getOrCreatePreferences(userId: string): Promise<VoicePreferences> {
+  const existing = await db.voicePreferences.findUnique({ where: { userId } });
   if (existing) return existing;
   try {
-    return await db.voicePreferences.create({ data: { id: "default" } });
+    return await db.voicePreferences.create({ data: { userId } });
   } catch {
-    // Course concurrente : le singleton existe déjà.
-    const created = await db.voicePreferences.findUnique({ where: { id: "default" } });
+    // Course concurrente : les préférences de cet utilisateur existent déjà.
+    const created = await db.voicePreferences.findUnique({ where: { userId } });
     if (!created) throw new Error("Impossible de créer les préférences vocales");
     return created;
   }
@@ -339,22 +340,25 @@ interface PendingAnnouncement {
 }
 
 /**
- * Exécute un tick complet : charge → computeTick → résolution logs → LLM
- * (optionnel, style 'naturel', annonces parlées uniquement) → persistance.
+ * Exécute un tick complet POUR UN UTILISATEUR : charge → computeTick → résolution
+ * logs → LLM (optionnel, style 'naturel', annonces parlées uniquement) → persistance.
+ * Scopage strict : seules les tâches et logs de cet utilisateur sont considérés
+ * (l'anti-frénésie est également par utilisateur).
  * Idempotent : 2 ticks consécutifs ne produisent jamais deux fois la même annonce.
  */
-export async function runTick(now: Date): Promise<TickResult> {
-  const prefs = await getOrCreatePreferences();
-  const tasks = await db.task.findMany();
+export async function runTick(now: Date, userId: string): Promise<TickResult> {
+  const prefs = await getOrCreatePreferences(userId);
+  const tasks = await db.task.findMany({ where: { userId } });
   const activeIds = tasks.filter((t) => t.status === "en_cours").map((t) => t.id);
 
-  // Logs pertinents : tous ceux des tâches actives (toutes dates, pour la dédup)
-  // + tout log très récent (anti-frénésie, y compris tâches depuis supprimées/terminées).
+  // Logs pertinents : ceux des tâches actives de l'utilisateur (toutes dates, pour
+  // la dédup) + tout log TRÈS récent de l'utilisateur (anti-frénésie, y compris
+  // tâches depuis terminées ; les logs de tâches supprimées disparaissent en cascade).
   const recentLogs = await db.reminderLog.findMany({
     where: {
       OR: [
         { taskId: { in: activeIds } },
-        { createdAt: { gte: new Date(now.getTime() - 2 * ANTI_FRENZY_MS) } },
+        { createdAt: { gte: new Date(now.getTime() - 2 * ANTI_FRENZY_MS) }, task: { userId } },
       ],
     },
   });

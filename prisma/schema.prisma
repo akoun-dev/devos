@@ -11,12 +11,15 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  posts     Post[]
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String?
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  posts            Post[]
+  tasks            Task[]
+  voicePreferences VoicePreferences[]
 }
 
 model Post {
@@ -44,11 +47,17 @@ model Task {
   reminderEnabled       Boolean       @default(true)
   createdAt             DateTime      @default(now())
   updatedAt             DateTime      @updatedAt
+  userId                String
+  user                  User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   reminderLogs          ReminderLog[]
+
+  @@index([userId])
 }
 
 model VoicePreferences {
-  id                    String    @id @default("default")
+  id                    String    @id @default(cuid())
+  userId                String    @unique
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   enabled               Boolean   @default(true)
   reminderOffsetMinutes Int       @default(60)
   announceNewTasks      Boolean   @default(true)

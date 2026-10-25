@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { errorResponse, readJsonBody, zodErrorMessage } from "@/lib/api-helpers";
+import { getSessionUser } from "@/lib/auth";
 import { getOrCreatePreferences } from "@/lib/assistant/scheduler";
 import { serializePreferences } from "@/lib/serialize";
 
@@ -34,10 +35,14 @@ const preferencesSchema = z
   .strict()
   .partial();
 
-/** GET /api/voice-preferences — singleton (créé avec les défauts si absent). */
+/** GET /api/voice-preferences — préférences de l'utilisateur connecté (créées avec les défauts si absentes). */
 export async function GET() {
   try {
-    const prefs = await getOrCreatePreferences();
+    const user = await getSessionUser();
+    if (!user) {
+      return errorResponse("Authentification requise", 401);
+    }
+    const prefs = await getOrCreatePreferences(user.id);
     return NextResponse.json({ preferences: serializePreferences(prefs) });
   } catch (error) {
     console.error("[api/voice-preferences] GET :", error);
@@ -45,15 +50,19 @@ export async function GET() {
   }
 }
 
-/** PUT /api/voice-preferences — mise à jour partielle validée par Zod. */
+/** PUT /api/voice-preferences — mise à jour partielle validée par Zod. Scopé à l'utilisateur connecté. */
 export async function PUT(request: NextRequest) {
   try {
+    const user = await getSessionUser();
+    if (!user) {
+      return errorResponse("Authentification requise", 401);
+    }
     const body = await readJsonBody(request);
     const parsed = preferencesSchema.safeParse(body);
     if (!parsed.success) {
       return errorResponse(`Préférences invalides — ${zodErrorMessage(parsed.error)}`, 400);
     }
-    const prefs = await getOrCreatePreferences();
+    const prefs = await getOrCreatePreferences(user.id);
     const updated = await db.voicePreferences.update({
       where: { id: prefs.id },
       data: parsed.data,

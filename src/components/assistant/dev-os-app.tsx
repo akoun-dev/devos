@@ -2,21 +2,31 @@
 
 /**
  * DevOSApp — racine cliente de la page unique `/` (FEATURE-001).
- * 3 onglets : Assistant · Tâches · Paramètres. Header (h1 + statut) + footer sticky.
+ * 3 onglets : Assistant · Tâches · Paramètres. Header (h1 + statut + identité) + footer sticky.
  * Couleurs sémantiques : actif=emerald, suspendu=amber, heures silencieuses=zinc. Aucun bleu/indigo.
+ * FEATURE-AUTH : exigé connecté (AuthGate en amont) ; expiration de session (401) → onSessionExpired.
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Volume2 } from 'lucide-react'
+import { LogOut, Volume2 } from 'lucide-react'
 
 import { AssistantPanel } from '@/components/assistant/assistant-panel'
 import { SettingsScreen } from '@/components/assistant/settings-screen'
 import { TasksManager } from '@/components/assistant/tasks-manager'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useVoiceAssistant } from '@/hooks/use-voice-assistant'
 import { cn } from '@/lib/utils'
+import type { AuthUser } from '@/types/assistant'
+
+interface DevOSAppProps {
+  user: AuthUser
+  onLogout: () => Promise<void> | void
+  /** Session expirée côté serveur (401 renvoyé par un endpoint métier). */
+  onSessionExpired: () => void
+}
 
 type AssistantStatus = 'active' | 'suspended' | 'quiet'
 type TabKey = 'assistant' | 'tasks' | 'settings'
@@ -41,8 +51,8 @@ const STATUS_CONFIG: Record<AssistantStatus, { label: string; className: string;
   },
 }
 
-export function DevOSApp() {
-  const assistant = useVoiceAssistant()
+export function DevOSApp({ user, onLogout, onSessionExpired }: DevOSAppProps) {
+  const assistant = useVoiceAssistant(onSessionExpired)
   const [activeTab, setActiveTab] = useState<TabKey>('assistant')
   const [highlightTaskId, setHighlightTaskId] = useState<string | null>(null)
   const [clock, setClock] = useState<string>('')
@@ -86,6 +96,20 @@ export function DevOSApp() {
 
   const statusConfig = status ? STATUS_CONFIG[status] : null
 
+  const initials = useMemo(() => {
+    const source = (user.name ?? user.email).trim()
+    const parts = source.split(/[\s@._-]+/).filter(Boolean)
+    const letters = parts
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase() ?? '')
+      .join('')
+    return letters || '?'
+  }, [user.name, user.email])
+
+  const handleLogoutClick = useCallback(() => {
+    void onLogout()
+  }, [onLogout])
+
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
       <header className="sticky top-0 z-40 border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
@@ -106,18 +130,43 @@ export function DevOSApp() {
               </p>
             </div>
           </div>
-          {statusConfig ? (
-            <Badge
-              variant="outline"
-              className={cn('gap-1.5 px-2.5 py-1 text-xs font-medium', statusConfig.className)}
-              aria-label={`État de l'assistant : ${statusConfig.label}`}
+          <div className="flex flex-wrap items-center gap-2">
+            {statusConfig ? (
+              <Badge
+                variant="outline"
+                className={cn('gap-1.5 px-2.5 py-1 text-xs font-medium', statusConfig.className)}
+                aria-label={`État de l'assistant : ${statusConfig.label}`}
+              >
+                <span className={cn('size-2 rounded-full', statusConfig.dot)} aria-hidden="true" />
+                {statusConfig.label}
+              </Badge>
+            ) : (
+              <Skeleton className="h-6 w-32 rounded-full" />
+            )}
+            <div
+              className="flex items-center gap-1.5 rounded-full border bg-card py-1 pl-1 pr-1"
+              title={user.email}
             >
-              <span className={cn('size-2 rounded-full', statusConfig.dot)} aria-hidden="true" />
-              {statusConfig.label}
-            </Badge>
-          ) : (
-            <Skeleton className="h-6 w-32 rounded-full" />
-          )}
+              <span
+                className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-semibold text-primary"
+                aria-hidden="true"
+              >
+                {initials}
+              </span>
+              <span className="hidden max-w-40 truncate text-sm sm:inline">
+                {user.name ?? user.email}
+              </span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-8 rounded-full text-muted-foreground hover:text-foreground"
+                onClick={handleLogoutClick}
+                aria-label="Se déconnecter"
+              >
+                <LogOut className="size-4" aria-hidden="true" />
+              </Button>
+            </div>
+          </div>
         </div>
       </header>
 

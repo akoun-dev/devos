@@ -14,7 +14,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { useToast } from '@/hooks/use-toast'
-import { apiFetch } from '@/lib/assistant/api'
+import { ApiError, apiFetch } from '@/lib/assistant/api'
 import { formatTimeFR } from '@/lib/assistant/format'
 import { notify } from '@/lib/assistant/notifications'
 import { isSpeechSynthesisSupported, speak } from '@/lib/assistant/tts'
@@ -26,7 +26,7 @@ import type {
   VoicePreferences,
 } from '@/types/assistant'
 
-const PREFS_STORAGE_KEY = 'devos-voice-prefs'
+export const PREFS_STORAGE_KEY = 'devos-voice-prefs'
 const JOURNAL_LIMIT = 50
 const TICK_INTERVAL_MS = 30_000
 
@@ -93,7 +93,7 @@ function mirrorPrefsToStorage(prefs: VoicePreferences): void {
   }
 }
 
-export function useVoiceAssistant() {
+export function useVoiceAssistant(onUnauthorized?: () => void) {
   const { toast } = useToast()
 
   const [prefs, setPrefs] = useState<VoicePreferences | null>(null)
@@ -114,6 +114,22 @@ export function useVoiceAssistant() {
   useEffect(() => {
     prefsRef.current = prefs
   }, [prefs])
+
+  // FEATURE-AUTH — session expirée (401) : notifie le parent une seule fois via
+  // un callback mémorisé dans un ref (stable entre les rendus).
+  const onUnauthorizedRef = useRef(onUnauthorized)
+  useEffect(() => {
+    onUnauthorizedRef.current = onUnauthorized
+  }, [onUnauthorized])
+
+  /** Renvoie true si l'erreur est un 401 (session absente/expirée) et déclenche la déconnexion. */
+  const handleUnauthorized = useCallback((error: unknown): boolean => {
+    if (error instanceof ApiError && error.status === 401) {
+      onUnauthorizedRef.current?.()
+      return true
+    }
+    return false
+  }, [])
 
   const handleAnnouncements = useCallback(
     (list: Announcement[]) => {
@@ -163,7 +179,8 @@ export function useVoiceAssistant() {
       const data = await apiFetch<TickResponse>('/api/assistant/tick', { method: 'POST' })
       setLastTick({ now: data.now, quietHours: data.quietHours, at: new Date().toISOString(), ok: true })
       handleAnnouncements(data.announcements)
-    } catch {
+    } catch (error) {
+      handleUnauthorized(error)
       // Pas de toast à chaque échec de tick (boucle 30 s) : l'état serveur est
       // affiché dans le footer ; les erreurs d'actions utilisateur sont toastées.
       setLastTick((prev) => ({
@@ -185,7 +202,8 @@ export function useVoiceAssistant() {
         setPrefs(data.preferences)
         prefsRef.current = data.preferences
         mirrorPrefsToStorage(data.preferences)
-      } catch {
+      } catch (error) {
+        handleUnauthorized(error)
         if (cancelled) return
         const fallback = readPrefsFromStorage()
         setPrefs(fallback)
@@ -214,15 +232,17 @@ export function useVoiceAssistant() {
       const data = await apiFetch<{ tasks: Task[] }>('/api/tasks')
       setTasks(data.tasks)
     } catch (error) {
-      toast({
-        title: 'Impossible de charger les tâches',
-        description: error instanceof Error ? error.message : undefined,
-        variant: 'destructive',
-      })
+      if (!handleUnauthorized(error)) {
+        toast({
+          title: 'Impossible de charger les tâches',
+          description: error instanceof Error ? error.message : undefined,
+          variant: 'destructive',
+        })
+      }
     } finally {
       setTasksLoading(false)
     }
-  }, [toast])
+  }, [handleUnauthorized, toast])
 
   useEffect(() => {
     void refreshTasks()
@@ -250,14 +270,16 @@ export function useVoiceAssistant() {
         setPrefs(current)
         prefsRef.current = current
         mirrorPrefsToStorage(current)
-        toast({
-          title: "Échec de l'enregistrement",
-          description: error instanceof Error ? error.message : undefined,
-          variant: 'destructive',
-        })
+        if (!handleUnauthorized(error)) {
+          toast({
+            title: "Échec de l'enregistrement",
+            description: error instanceof Error ? error.message : undefined,
+            variant: 'destructive',
+          })
+        }
       }
     },
-    [toast],
+    [handleUnauthorized, toast],
   )
 
   const speakTest = useCallback(async () => {
@@ -282,13 +304,15 @@ export function useVoiceAssistant() {
         toast({ title: 'Test de voix', description: data.message })
       }
     } catch (error) {
-      toast({
-        title: 'Impossible de générer le message de test',
-        description: error instanceof Error ? error.message : undefined,
-        variant: 'destructive',
-      })
+      if (!handleUnauthorized(error)) {
+        toast({
+          title: 'Impossible de générer le message de test',
+          description: error instanceof Error ? error.message : undefined,
+          variant: 'destructive',
+        })
+      }
     }
-  }, [toast])
+  }, [handleUnauthorized, toast])
 
   const snooze = useCallback(
     async (logId: string, minutes = 5) => {
@@ -300,14 +324,16 @@ export function useVoiceAssistant() {
         setAnnouncements((prev) => prev.filter((entry) => entry.announcement.id !== logId))
         toast({ title: `Annonce reportée de ${minutes} minutes`, description: 'Elle sera rappelée plus tard.' })
       } catch (error) {
-        toast({
-          title: 'Impossible de reporter l\'annonce',
-          description: error instanceof Error ? error.message : undefined,
-          variant: 'destructive',
-        })
+        if (!handleUnauthorized(error)) {
+          toast({
+            title: 'Impossible de reporter l\'annonce',
+            description: error instanceof Error ? error.message : undefined,
+            variant: 'destructive',
+          })
+        }
       }
     },
-    [toast],
+    [handleUnauthorized, toast],
   )
 
   const categories = useMemo(

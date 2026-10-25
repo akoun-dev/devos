@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { errorResponse, readJsonBody, zodErrorMessage } from "@/lib/api-helpers";
+import { getSessionUser } from "@/lib/auth";
 import { runTick } from "@/lib/assistant/scheduler";
 
 export const dynamic = "force-dynamic";
@@ -27,7 +28,11 @@ export async function POST(request: NextRequest) {
     if (Number.isNaN(now.getTime())) {
       return errorResponse("Requête invalide — now : date ISO invalide", 400);
     }
-    const result = await runTick(now);
+    const user = await getSessionUser();
+    if (!user) {
+      return errorResponse("Authentification requise", 401);
+    }
+    const result = await runTick(now, user.id);
     return NextResponse.json({
       announcements: result.announcements,
       now: result.now.toISOString(),

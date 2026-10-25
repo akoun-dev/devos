@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { errorResponse, readJsonBody, zodErrorMessage } from "@/lib/api-helpers";
+import { getSessionUser } from "@/lib/auth";
 import { reformulate } from "@/lib/assistant/ai";
 import { buildTemplateMessage, formatDelay, humanizeDelay, type AnnouncementType, type AssistantStyle } from "@/lib/assistant/templates";
 
@@ -22,6 +23,10 @@ const SAMPLE_DELAY_MINUTES = 45;
  */
 export async function POST(request: NextRequest) {
   try {
+    // Endpoint authentifié : il déclenche un appel LLM, jamais exposé publiquement.
+    if (!(await getSessionUser())) {
+      return errorResponse("Authentification requise", 401);
+    }
     const body = await readJsonBody(request);
     const parsed = testVoiceSchema.safeParse(body);
     if (!parsed.success) {

@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { errorResponse, readJsonBody, zodErrorMessage } from "@/lib/api-helpers";
+import { getSessionUser } from "@/lib/auth";
 import { serializeTask } from "@/lib/serialize";
 
 export const dynamic = "force-dynamic";
@@ -28,9 +29,13 @@ const taskQuerySchema = z
   })
   .strict();
 
-/** GET /api/tasks?status=&category= — tri dueAt asc (nulls en dernier) puis createdAt desc. */
+/** GET /api/tasks?status=&category= — tri dueAt asc (nulls en dernier) puis createdAt desc. Scopé à l'utilisateur connecté. */
 export async function GET(request: NextRequest) {
   try {
+    const user = await getSessionUser();
+    if (!user) {
+      return errorResponse("Authentification requise", 401);
+    }
     const params = request.nextUrl.searchParams;
     const parsedQuery = taskQuerySchema.safeParse({
       status: params.get("status") ?? undefined,
@@ -42,6 +47,7 @@ export async function GET(request: NextRequest) {
     const { status, category } = parsedQuery.data;
     const tasks = await db.task.findMany({
       where: {
+        userId: user.id,
         ...(status ? { status } : {}),
         ...(category ? { category } : {}),
       },
@@ -64,9 +70,13 @@ export async function GET(request: NextRequest) {
   }
 }
 
-/** POST /api/tasks — création (201). */
+/** POST /api/tasks — création (201), rattachée à l'utilisateur connecté. */
 export async function POST(request: NextRequest) {
   try {
+    const user = await getSessionUser();
+    if (!user) {
+      return errorResponse("Authentification requise", 401);
+    }
     const body = await readJsonBody(request);
     const parsed = createTaskSchema.safeParse(body);
     if (!parsed.success) {
@@ -82,6 +92,7 @@ export async function POST(request: NextRequest) {
         dueAt: data.dueAt ? new Date(data.dueAt) : null,
         reminderOffsetMinutes: data.reminderOffsetMinutes ?? null,
         reminderEnabled: data.reminderEnabled ?? true,
+        userId: user.id,
       },
     });
     return NextResponse.json({ task: serializeTask(task) }, { status: 201 });

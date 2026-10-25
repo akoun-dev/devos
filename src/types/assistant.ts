@@ -26,7 +26,14 @@ export interface Task {
   updatedAt: string
 }
 
-/** Préférences vocales (singleton id="default") */
+/** Utilisateur authentifié (contrat /api/auth/* — FEATURE-AUTH). */
+export interface AuthUser {
+  id: string
+  email: string
+  name: string | null
+}
+
+/** Préférences vocales (par utilisateur — le singleton "default" a disparu avec FEATURE-AUTH) */
 export interface VoicePreferences {
   enabled: boolean
   reminderOffsetMinutes: number
