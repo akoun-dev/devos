@@ -296,3 +296,68 @@ Stage Summary:
 - BD migrée proprement (singleton "default" supprimé, base vierge — cohérent DEBT-020) ; JWT_SECRET jamais commité
 - Décisions : next-auth définitivement proscrit ; tick piloté par session (cohérent ADR-002 état dérivé) ; miroir localStorage purgé aux transitions (risque résiduel documenté dans ADR-003)
 - Ouvert : DEBT-021 (rate limiting avant exposition réseau réelle) ; **AUDIT-003 déclenché** (règle : audit après chaque feature) — points de vigilance : ADR-003, contrats v1.1, scopage, DEBT-021
+
+---
+Task ID: 23
+Agent: ORCHESTRATEUR PRINCIPAL (CTO)
+Task: Demande CTO « Créez un compte via l'onglet Inscription » — preuve E2E directe du cycle de vie du compte (FEATURE-AUTH)
+
+Work Log:
+- Pré-vol : GET / → 200, GET /api/health → {status:'ok', db:'ok'} — serveur sain avant test
+- agent-browser open / → AuthGate rendu (tabs Connexion/Inscription, labels, required)
+- Clic onglet « Inscription » → formulaire (Nom optionnel / Email / Mot de passe / bouton « Créer mon compte »)
+- Inscription : David Renard · david.renard@devos.test · mot de passe fort (16 car.) → **compte créé** : toast « Bienvenue, David Renard ! », bascule automatique vers l'app (h1 unique, 3 onglets, chip identité « David Renard » + bouton Se déconnecter dans le banner)
+- Comportements vérifiés au passage : heures silencieuses détectées (22:31 UTC ∈ 22:00-07:00 → bandeau « Heures silencieuses en cours », annonces muettes sans rattrapage), footer serveur « connecté », dernière synchro à jour
+- Console : 0 erreur · 0 erreur de page · captures : tool-results/task23-inscription-ok.png, tool-results/task23-reconnexion-ok.png
+- Déconnexion → retour AuthGate + toast « Déconnecté — À bientôt ! » ; reconnexion avec les mêmes identifiants → **succès**, app réaccessible (persistance du compte prouvée en DB)
+- Traces serveur : GET /api/voice-preferences 200, GET /api/tasks 200, POST /api/assistant/tick 200 (scheduler par utilisateur pour le nouveau compte) — aucune erreur dev.log
+
+Stage Summary:
+- **Golden path du compte PROUVÉ par exécution directe navigateur** : Inscription → app → déconnexion → reconnexion, 100 % vert
+- Le compte « David Renard » (david.renard@devos.test) est un compte de démonstration créé sur demande CTO — à intégrer à la politique DEBT-020 (purge avant exposition prod réelle)
+- Aucun code modifié ; prérequis AUDIT-003 satisfait → audit global délégué (Task 24)
+
+---
+Task ID: 24 (audit) + 24-ter/24-quater/25 (soldes CTO)
+Agent: AGENT AUDIT GLOBAL + ORCHESTRATEUR PRINCIPAL (CTO)
+Task: AUDIT GLOBAL #003 post-FEATURE-AUTH + exécution immédiate des conditions faisables du verdict
+
+Work Log:
+- AUDIT-003 (Agent Audit Global) : méthodologie AUDIT-002 réutilisée à l'identique ; gates exécutés (lint exit 0 · tsc exit 2 = 4 erreurs seed · bun audit 0 CRITIQUE, résiduel 41 HIGH transitifs/dev non atteignables) ; 24 vérifications curl PASS (cycle auth complet : register 201+cookie httpOnly, 409 doublon, 400 faible, 401 générique ×4, logout, me) ; isolation inter-users prouvée 2× (B : liste vide, PATCH/DELETE/snooze croisés → 404, tâche A intacte) ; scheduler intègre post-scopage (idempotence ×2, zéro rattrapage, prefs auto-créées) ; 0 middleware vérifié ; JWT_SECRET env-only
+- Verdict AUDIT-003 : **77/100 stable** (sécurité +16 → 78 ; qualité −8 → 68 à cause du seed ; doc −4 ; santé −5) — **0 CRITIQUE · 2 MAJEUR (DEBT-022 seed/tsc ; REV-004 manquante) · 5 MINEUR** — AUTORISÉ SOUS CONDITION : (1) seed réparé avant tout nouveau commit de feature ; (2) avant exposition prod réelle : CSP + rate limiting + purge des 6 comptes de démo (alice, bob, carol, david.renard, audit-*, audit-b-*)
+- 24-ter (CTO) : scripts/seed.ts réécrit — utilisateur de démo dédié demo@devos.test (bcrypt coût 10, politique DEBT-020 en en-tête), 3 tâches attachées userId, VoicePreferences upsert par userId ; preuves : tsc exit 2 → **0**, lint exit 0, seed exit 0 (no-op attendu) ; DEBT-022 → TRAITÉ
+- 24-quater (CTO) : COMMIT_LOG.md synchronisé — 5 commits conventionnels manquants consignés (1863276, 67117f5, 67897bf, e22aee5, 66323b4) + section « Commits auto sauvegarde d'environnement » avec les 4 UUID (e108919, 185d9d4, 3b27e97, 5aa6d67) + règle de consignation permanente ; DEBT-019 → TRAITÉ
+- 25 (CTO) : TASKS.xlsx — TASK-016 (AUDIT-003) insérée ligne 20 (styles copiés de TASK-015), TOTAL décalé en 21 (16 tâches, 100 %), STATISTIQUES resynchronisées (plages COUNTIF/SUM/AVERAGE étendues 5:20 — fin du drift DEBT-018 sur stats, santé 77 AUDIT-003, dette 22) ; pipeline xlsx : recalc 0 erreur/6 formules · audit 0 (4 zéros légitimes) · scan 0 · **validate passed** ; TASKS.md miroir synchronisé (16/16, TASK-016, dette 22, prochaine étape = plan d'action AUDIT-003)
+- Livrables audit écrits : .ai/AUDITS/AUDIT-003-2026-10-25.md, AUDIT_REPORT.md (synthèse + verdict), DEBT_REPORT.md (22 items), SYSTEM_COMPLIANCE.md (87 %, 8R/5P/0NR)
+
+Stage Summary:
+- **AUDIT-003 : 77/100, AUTORISÉ SOUS CONDITION, 0 CRITIQUE** — FEATURE-AUTH jugée conforme ADR-003/contrats v1.1/scopage
+- Conditions du verdict : n°1 (seed/tsc) et DEBT-019 **soldées séance tenante** ; restent avant exposition prod réelle : DEBT-013 CSP, DEBT-021 rate limiting, DEBT-020 purge comptes de démo
+- Plan d'action AUDIT-003 (8 actions) : fix seed ✓ / REV-004 rétrospective / màj docs (DEBT-018) / CSP / rate limiting / h1 AuthGate + découpage UI + purge / ESLint vague 2 / Vitest au déverrouillage
+- Prochain audit : **AUDIT-004** après la prochaine feature ou avant toute exposition prod
+
+---
+Task ID: 24
+Agent: AGENT AUDIT GLOBAL
+Task: AUDIT GLOBAL #003 — audit post-FEATURE-AUTH (ADR-003, contrats v1.1, scopage multi-users, plan d'action AUDIT-002)
+
+Work Log:
+- Lecture intégrale du worklog (14 sections antérieures intactes, Tasks 1-2 → 23) + AUDIT-002 (méthodologie/grille réutilisée à l'identique) + AUDIT_REPORT + DEBT_REPORT + SYSTEM_COMPLIANCE + API_CONTRACTS v1.1 + ADR-003 + REQUIREMENTS + README
+- Gates qualité : `bun run lint` → **exit 0** ; `bunx tsc --noEmit` → **exit 2, 4 erreurs TS2322 scripts/seed.ts:23,32,40,53** (« Property 'user' is missing » — régression gate verte d'AUDIT-002, seed cassé post-migration userId → **DEBT-022 MAJEUR nouveau**) ; `bun audit` → **0 CRITIQUE / 41 HIGH / 20 MOD / 2 LOW (63 vulnérances, 17 paquets uniques à HIGH)** — vs attendu 2 HIGH : base d'advisories évoluée, tous transitifs/dev NON atteignables (sharp 0 next/image ; prismjs/js-cookie/@reactuses/mdxeditor 0 usage src/ ; chaînes eslint/postcss/prisma CLI)
+- Plan d'action AUDIT-002 vérifié : next@16.4.3 ✓, zod@4.6.7 ✓, next-auth 0 import ✓ (bun pm ls + rg), CSP toujours absente (next.config.ts:3-4, DEBT-013 EN COURS), vague 2 ESLint non faite (exhaustive-deps:20, no-explicit-any:12 off, 27 « off » en base), DEBT-017 non fait (settings-screen 632, tasks-manager 531), DEBT-018 OUVERT (ARCHITECTURE.md:52), DEBT-019 OUVERT élargi (4ᵉ auto-commit UUID 5aa6d67 + COMMIT_LOG arrêté à a8bbbc8 = 5 commits non consignés + arbre non propre : worklog.md +20 l. Task 23 non commitées, tool-results/ captures)
+- Runtime curl **24 vérifications PASS** : curl -sI / → 200 + 5 headers sécurité + X-Powered-By ABSENT ; health {status:ok,db:ok,version:1.0.0} ; cycle auth : register audit-1792967790@devos.test → **201 + Set-Cookie** (devos_session HttpOnly SameSite=lax Max-Age=604800, JWT HS256 décodé sub/iat/exp = 7 j) ; doublon → **409** ; mot de passe faible → **400** ; me avec cookie → 200 ; me sans cookie → **401** ; POST tasks sans cookie → **401** ; login erroné → **401 message générique** ; logout → 200 + cookie **Max-Age=0** ; re-login → 200 ; me avec ancien token post-logout → 200 = trade-off ADR-003 (pas de révocation serveur, documenté)
+- Isolation inter-users PUVES (compte B audit-b-1792967790@devos.test, jar séparé) : B GET tasks → **{"tasks":[]}** ; B PATCH tâche A → **404 « Tâche introuvable »** ; B DELETE → **404** ; B snooze → **404 « Annonce introuvable »** ; tâche A intacte re-lue par A
+- Scheduler/produit intacts post-scopage : tick avec session → 200 (2 annonces template, spoken:false, quietHours.active:true 22:00-07:00 — FR-007 sans rattrapage) ; idempotence tick ×2 → announcements:0 ; prefs auto-créées pour nouveau user (défauts REQUIREMENTS : enabled, offset 60, quietHours true) ; PUT volume:2 → **400 Zod** ; test-voice sans cookie → **401** (endpoint LLM jamais public) ; computeTick pur + resolveExisting/expire inchangés ; runTick(now, userId) where userId + anti-frénésie task.userId (scheduler.ts:349-361)
+- Code sécurité auth par lecture : auth.ts 119 l. (bcrypt coût 10 :24, dummy hash réel précalculé + try/catch :31-59, TTL 7 j :23, HS256 jose algos épinglés, JWT_SECRET process.env :34, Secure si prod :113) ; 4 routes auth Zod .strict() (register 409 pré-check + P2002, login générique + dummy check, logout idempotent, me 401) ; cookies jamais loggés (console.error catch uniquement) ; schema.prisma Task.userId requis + @@index + Cascade :50-54, VoicePreferences.userId @unique :59
+- TTFB re-mesuré : 22/25/26 ms (budget 800 ms) ; tick authentifié 70 ms ; a11y : h1 unique post-login (dev-os-app.tsx:125) MAIS **AuthGate sans h1** (CardTitle = div ui/card.tsx:31-34 — régression ciblée MINEUR) ; role="status" :282 ; autocomplete ×5 ; lang="fr" ; aria-live ×2 ; « Se déconnecter » aria-label :164
+- Git : 21 commits = **17 conventionnels (81 %) + 4 auto UUID** ; 67897bf/e22aee5/66323b4 atomiques et conformes au worklog Task 22 ; `git check-ignore .env` exit 0 ; rg JWT_SECRET → uniquement process.env + worklog ; middleware.ts/Server Actions/next-image → 0 ; lecture sqlite readonly : **6 comptes de démonstration documentés** (alice, bob, carol Task 22 ; david.renard Task 23 ; audit-×2 AUDIT-003), 3 tâches, 5 prefs, 5 logs — politique DEBT-020
+- Doc↔code : 13 route.ts = contrat v1.1 exact (4 auth + 9 métier) ; ADR-003 ↔ implémentation conforme ; CHANGELOG 0.4.0 fidèle aux preuves ; écarts C1-C5 : ARCHITECTURE:52, API_CONTRACTS labels :24-37, **TASKS.md « Terminées 14 » vs xlsx fait foi 15/15 (openpyxl)**, TEAM_STATUS « AUDIT-002 PENDING » périmé, COMMIT_LOG -5 commits ; **REV-004 absente** (FEATURE-AUTH clôturée sans revue REVIEWER dédiée — MAJEUR protocole, compensée par 18 curl + E2E + audit)
+- Livrables écrits : `.ai/AUDITS/AUDIT-003-2026-10-25.md` (rapport complet), `.ai/AUDIT_REPORT.md` (remplacé), `.ai/DEBT_REPORT.md` (mises à jour factuelles 016/018/019/021 + DEBT-022 + stats 22 items — rien d'autre réécrit), `.ai/SYSTEM_COMPLIANCE.md` (re-score 87 %, 8 R/5 P/0 NR/2 NA)
+- AUCUN fichier applicatif modifié (src/, prisma/, package.json, configs, scripts/ intacts) ; 2 comptes de test créés (documentés) ; 0 commit ; serveur dev jamais arrêté ; scratch tool-results (3 read_*.txt audit) + /tmp nettoyés — captures Task 23 conservées (preuves worklog Task 23)
+
+Stage Summary:
+- **Score global AUDIT-003 : 76,7/100 (≈ 77) — stable vs 77** — archi 90, qualité 68 (gate tsc rouge −8), tests 31, doc 80, sécurité 78 (+16), a11y 83, perf 93, conformité 87, dette 73, santé 84
+- **Constats : 0 CRITIQUE · 2 MAJEUR** (DEBT-022 seed/tsc ; absence REV-004) **· 5 MINEUR** (41 HIGH transitives, AuthGate sans h1, hygiène git/COMMIT_LOG, drifts doc, DEBT-021 confirmé)
+- **Verdict : ✅ AUTORISÉ SOUS CONDITION** — conditions : (1) seed réparé + tsc 0 erreur avant tout nouveau commit de feature ; (2) avant exposition prod réelle : CSP (013) + rate limiting /api/auth/* (021) + purge des 6 comptes de démonstration (020)
+- FEATURE-AUTH jugée **conforme ADR-003/contrats v1.1** sur toute la chaîne audité — isolation inter-users prouvée 2× indépendamment ; scheduler intègre (idempotence, zéro rattrapage, AC-007, anti-frénésie par user, IA = faits)
+- Conformité 87 % (inchangée mais composition dégradée : API-FIRST et REVUE rétrocadées PARTIEL) ; dette 22 items (13 T / 3 EC / 1 R / 1 A / 4 O) ; plan d'action 8 actions transmis ; AUDIT-004 après la prochaine feature ou avant toute exposition prod
