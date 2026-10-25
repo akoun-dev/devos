@@ -13,7 +13,11 @@ Format : Hash | Type | Message | Fichiers | Atomicité (OK/KO) | Validation pre-
 | `7ddb0c9` | feat(assistant) | Backend FEATURE-001 — schéma Prisma (Task/VoicePreferences/ReminderLog), scheduler état dérivé, templates, heure silencieuse, routes API v1, seed | OK (1 préoccupation : backend feature) | lint OK · tick idempotent ×2 · 0 .env | 2026-10-25 |
 | `f2485b5` | feat(assistant) | Frontend FEATURE-001 — UI 3 onglets (Assistant/Tâches/Paramètres), tick 30 s, TTS Web Speech, notifications, journal vocal | OK (1 préoccupation : frontend feature) | lint OK · GET / 200 · 0 .env | 2026-10-25 |
 | `eb1a3d9` | chore(quality) | Vague dette — TS strict noImplicitAny, ignoreBuildErrors:false, strictMode, headers sécurité, ESLint vague 1, README, use-toast fix | OK (1 préoccupation : qualité/dette) | lint OK · tsc 0 erreur · headers vérifiés | 2026-10-25 |
-| docs(ai) | docs(ai) | Gouvernance FEATURE-001 — UX/ADRs/contrat v1, journaux, TASKS (14 tâches), dette à jour, worklog | OK (1 préoccupation : documentation) | xlsx validate passed | 2026-10-25 (hash finalisé dans l'entrée de synchronisation ci-dessous) |
+| `a8bbbc8` | docs(ai) | Gouvernance FEATURE-001 — UX/ADRs/contrat v1, journaux, TASKS (14 tâches), dette à jour, worklog | OK (1 préoccupation : documentation) | xlsx validate passed | 2026-10-25 |
+
+## Synchronisation post-session (2026-10-25)
+- Hash final du commit docs de clôture : `a8bbbc8` — session FEATURE-001 complète : **7ddb0c9 → f2485b5 → eb1a3d9 → a8bbbc8**.
+- Aucun fichier `.env` commité ; inventaire vérifié par `git status` avant chaque commit ; `git log --oneline` vérifié en fin de session.
 
 ## Conventions appliquées
 - Conventional Commits (`type(scope): résumé` + corps + refs DEBT/AUDIT/TASK)
