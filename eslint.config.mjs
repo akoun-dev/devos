@@ -44,6 +44,17 @@ const eslintConfig = [...nextCoreWebVitals, ...nextTypescript, {
     "no-useless-escape": "off",
   },
 }, {
+  // DEBT-003 (vague 1) : réactivation progressive des garde-fous sur le code applicatif.
+  // Les composants vendus shadcn/ui (src/components/ui) restent exclus — dette acceptée (DEBT-012).
+  files: ["src/**/*.{ts,tsx}"],
+  rules: {
+    "prefer-const": "error",
+    "no-var": "error",
+    "no-console": ["error", { allow: ["warn", "error"] }],
+    "eqeqeq": ["error", "always"],
+    "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],
+  },
+}, {
   ignores: ["node_modules/**", ".next/**", "out/**", "build/**", "next-env.d.ts", "examples/**", "skills"]
 }];
 
