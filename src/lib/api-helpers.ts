@@ -9,6 +9,13 @@ export function errorResponse(message: string, status: number): NextResponse {
   return NextResponse.json({ error: message }, { status });
 }
 
+/** Réponse 429 uniforme ({ error }) + en-tête Retry-After (DEBT-021, rate limiting). */
+export function rateLimitedResponse(message: string, retryAfterSec: number): NextResponse {
+  const response = errorResponse(message, 429);
+  response.headers.set("Retry-After", String(Math.max(1, Math.ceil(retryAfterSec))));
+  return response;
+}
+
 export function zodErrorMessage(error: ZodError): string {
   return (
     error.issues

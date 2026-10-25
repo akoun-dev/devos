@@ -2,11 +2,16 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
 
-import { errorResponse, readJsonBody, zodErrorMessage } from "@/lib/api-helpers";
+import { errorResponse, rateLimitedResponse, readJsonBody, zodErrorMessage } from "@/lib/api-helpers";
 import { hashPassword, sessionCookieOptions, SESSION_COOKIE_NAME, signSessionToken } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { checkRateLimit, clientIp } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
+
+/** DEBT-021 — anti création en masse : 5 inscriptions / heure / IP (fenêtre fixe mémoire). */
+const REGISTER_RATE_LIMIT_MAX = 5;
+const REGISTER_RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
 
 /** Email normalisé (trim + minuscules) — regex volontairement simple et stricte. */
 const registerSchema = z
@@ -26,6 +31,19 @@ const registerSchema = z
 /** POST /api/auth/register — création de compte + session immédiate (201). */
 export async function POST(request: NextRequest) {
   try {
+    // DEBT-021 : limiteur AVANT tout traitement (compte toute tentative, même malformée).
+    const verdict = checkRateLimit(
+      `register:${clientIp(request)}`,
+      REGISTER_RATE_LIMIT_MAX,
+      REGISTER_RATE_LIMIT_WINDOW_MS,
+    );
+    if (!verdict.allowed) {
+      return rateLimitedResponse(
+        "Trop de tentatives d'inscription depuis cette adresse — réessayez plus tard.",
+        verdict.retryAfterSec,
+      );
+    }
+
     const body = await readJsonBody(request);
     const parsed = registerSchema.safeParse(body);
     if (!parsed.success) {

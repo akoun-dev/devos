@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 
-import { errorResponse, readJsonBody, zodErrorMessage } from "@/lib/api-helpers";
+import { errorResponse, rateLimitedResponse, readJsonBody, zodErrorMessage } from "@/lib/api-helpers";
 import {
   dummyPasswordCheck,
   sessionCookieOptions,
@@ -10,8 +10,13 @@ import {
   verifyPassword,
 } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { checkRateLimit, clientIp } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
+
+/** DEBT-021 — anti brute force : 10 tentatives / 15 min / IP (fenêtre fixe mémoire). */
+const LOGIN_RATE_LIMIT_MAX = 10;
+const LOGIN_RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
 
 const loginSchema = z
   .object({
@@ -27,6 +32,19 @@ const loginSchema = z
  */
 export async function POST(request: NextRequest) {
   try {
+    // DEBT-021 : limiteur AVANT tout traitement (compte toute tentative, même malformée).
+    const verdict = checkRateLimit(
+      `login:${clientIp(request)}`,
+      LOGIN_RATE_LIMIT_MAX,
+      LOGIN_RATE_LIMIT_WINDOW_MS,
+    );
+    if (!verdict.allowed) {
+      return rateLimitedResponse(
+        "Trop de tentatives de connexion — réessayez dans quelques minutes.",
+        verdict.retryAfterSec,
+      );
+    }
+
     const body = await readJsonBody(request);
     const parsed = loginSchema.safeParse(body);
     if (!parsed.success) {
