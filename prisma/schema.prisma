@@ -1,9 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -19,6 +16,7 @@ model User {
   name      String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  posts     Post[]
 }
 
 model Post {
@@ -29,4 +27,61 @@ model Post {
   authorId  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+}
+
+// ─── FEATURE-001 « Assistant vocal proactif » (contrat API v1 — .ai/API_CONTRACTS.md) ───
+
+model Task {
+  id                    String        @id @default(cuid())
+  title                 String
+  description           String?
+  category              String        @default("general")
+  priority              String        @default("normale")
+  status                String        @default("en_cours")
+  dueAt                 DateTime?
+  reminderOffsetMinutes Int?
+  reminderEnabled       Boolean       @default(true)
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+  reminderLogs          ReminderLog[]
+}
+
+model VoicePreferences {
+  id                    String    @id @default("default")
+  enabled               Boolean   @default(true)
+  reminderOffsetMinutes Int       @default(60)
+  announceNewTasks      Boolean   @default(true)
+  announceDeadlines     Boolean   @default(true)
+  announcePriorities    Boolean   @default(true)
+  quietHoursEnabled     Boolean   @default(true)
+  quietStart            String    @default("22:00")
+  quietEnd              String    @default("07:00")
+  quietDays             String    @default("0,1,2,3,4,5,6")
+  style                 String    @default("naturel")
+  language              String    @default("fr-FR")
+  voice                 String?
+  volume                Float     @default(1)
+  allowedCategories     String    @default("")
+  privacyMode           Boolean   @default(false)
+  urgentOverrideQuiet   Boolean   @default(false)
+  suspended             Boolean   @default(false)
+  suspendedUntil        DateTime?
+  updatedAt             DateTime  @updatedAt
+}
+
+model ReminderLog {
+  id            String    @id @default(cuid())
+  taskId        String?
+  type          String
+  scheduledFor  DateTime
+  status        String    @default("annonce")
+  firedAt       DateTime?
+  snoozedUntil  DateTime?
+  message       String?
+  messageSource String?
+  createdAt     DateTime  @default(now())
+  task          Task?     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, type, scheduledFor])
 }
