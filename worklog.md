@@ -114,3 +114,116 @@ Stage Summary:
 - Répartition officielle publiée : chaque exigence FR-001→010 et AC-001→012 a un agent owner et un Task ID
 - Séquence d'exécution prête : Phase 0 UX ∥ ADR (10-a/10-b) → découpage (11) → M1→M7 (12→18) → revues (19) → E2E+doc (20) → AUDIT-002 (21)
 - Système en STANDBY : exécution démarrera uniquement au signal « GO » du CTO
+
+---
+Task ID: 10-a + 10-b
+Agent: AGENT UX/UI (10-a) + AGENT 1 TECH LEAD (10-b) — exécuté sous supervision ORCHESTRATEUR
+Task: GO reçu — Phase 0 UX + Phase 2 design technique (ADRs + contrat API v1)
+
+Work Log:
+- 10-a : rédaction `.ai/SPECS/FEATURE-001-UX.md` — page unique 3 onglets (Assistant/Tâches/Paramètres), wireframe, 9 réglages FR-006, parcours P1-P4 (permission, rappel+snooze, silencieux sans rattrapage, recalcul), règles a11y/couleurs/responsive
+- 10-b : `.ai/ADR/ADR-001-adaptation-plateforme.md` (correspondances honnêtes sandbox↔cible Flutter, AC-011 = N/A justifié, fuseau Africa/Abidjan=UTC+0)
+- 10-b : `.ai/ADR/ADR-002-scheduler-independant-ia.md` — architecture « état dérivé » : templates serveur TOUJOURS d'abord, LLM optionnel avec fallback, recalcul automatique au tick (AC-007/AC-012 par conception)
+- 10-b : contrat API v1 publié dans `.ai/API_CONTRACTS.md` (AUTHORITATIF) : /api/health, /api/voice-preferences (GET/PUT), /api/tasks (GET/POST), /api/tasks/[id] (PATCH/DELETE), /api/assistant/{tick,snooze,test-voice} ; types Task/VoicePreferences/Announcement ; Announcement.spoken=false = supprimée silencieux/suspension, jamais rejouée
+
+Stage Summary:
+- Design verrouillé, contrat API v1 autoritatif → agents BACKEND et FRONTEND lancés en parallèle
+- Décisions clés : ReminderLog unique(taskId,type,scheduledFor) = anti-doublons ; fenêtre de grâce 15 min ; obsolètes marqués EXPIRE (zéro rattrapage) ; priority = 1/jour/tâche (haute+urgente) ; new_task anti-frénésie 60 s
+
+---
+Task ID: 12/13/14/15/16/17 + INT
+Agent: AGENT FRONTEND + AGENT BACKEND (livraisons) + ORCHESTRATEUR (intégration)
+Task: FEATURE-001 — implémentation M1→M6 en parallèle + intégration et vague de dette
+
+Work Log:
+- FRONTEND (12-b/13-b/14) : 10 fichiers — types contrat, apiFetch relatif, TTS file séquentielle (speechSynthesis, zéro réseau), notifications défensives, format Intl fr-FR, hook use-voice-assistant (tick 30 s + tick immédiat, miroir localStorage, journal aria-live dédoublonné), DevOSApp 3 onglets (Assistant/Tâches/Paramètres) avec h1 + footer sticky safe-area, 9 réglages FR-006 ; lint 0 erreur
+- BACKEND (12-a/13-a/15/16/17) : schema.prisma (DEBT-001 fixée + Task/VoicePreferences/ReminderLog @@unique) ; templates FR ×3 styles ×privacy ; quiet-hours wrap minuit UTC ; scheduler état dérivé + computeSpoken ; ai.ts LLM serveur timeout 4 s fallback template ; 7 routes API contrat v1 (params Promise Next 16) ; seed 3 tâches exécuté ; 3 bugs trouvés/corrigés (LLM 429 → séquentiel ; fuite privacyMode via LLM → faits filtrés ; urgent manquant au retrigger)
+- PREUVES BACKEND : tick×2 idempotent (2e = []), health ok, POST 201, PUT validation 400, snooze re-déclenchement, AC-007/008/009/012 prouvés par curl (réactivation sans rattrapage, urgente+override parlée, privacy sans titre)
+- INTÉGRATION (orchestrateur) : re-vérification tick×2 + health en direct (OK) ; grep scheduler confirmé fix `urgent` threadé ; page.tsx server component + h1 confirmés
+- VAGUE DETTE : DEBT-004 ignoreBuildErrors:false ; DEBT-005 reactStrictMode:true ; DEBT-006 noImplicitAny:true (tsc 0 erreur src/) ; DEBT-013 headers nosniff/SAMEORIGIN/Referrer-Policy/Permissions-Policy + poweredByHeader:false (X-Powered-By disparu, curl -sI) ; DEBT-003 vague 1 scoped src/** (prefer-const, no-var, no-console, eqeqeq, no-unused-vars) ; DEBT-009 README.md racine ; corrections : use-toast.ts (disable documenté DEBT-012), tsconfig exclude examples/skills (tsc 0 erreur)
+- Registre DEBT_REPORT.md synchronisé : 11 TRAITÉ, 2 EN COURS (003 vague 1, 013 CSP restant), 1 REPORTÉ (010 — règle d'environnement « aucun code de test », compensation E2E Agent Browser), 1 acceptée (012)
+
+Stage Summary:
+- FEATURE-001 M1→M6 implémentée de bout en bout ; lint exit 0 ; tsc 0 erreur ; GET / 200 ; headers sécurité actifs
+- Reste : E2E navigateur (Task E2E), journals+TASKS.xlsx+commits (19/20), AUDIT-002 (21)
+
+---
+Task ID: 12-b / 13-b / 14
+Agent: AGENT FRONTEND
+Task: FEATURE-001 — UI complète côté client (page unique `/`, 3 onglets, moteur vocal client, hook de tick) — frontend-first, API consommée selon contrat v1 (API_CONTRACTS.md)
+
+Work Log:
+- Lecture worklog.md (Tasks 1→10-b) + .ai/SPECS/FEATURE-001-UX.md + .ai/API_CONTRACTS.md (contrat v1 AUTHORITATIF) ; inventaire src/components/ui (48 composants shadcn présents, Toaster via use-toast confirmé dans layout.tsx)
+- Créé src/types/assistant.ts : Task, VoicePreferences, Announcement, TickResponse, TestVoiceResponse + unions (TaskPriority, TaskStatus, AnnouncementType, MessageSource, VoiceStyle) — EXACTEMENT le contrat v1
+- Créé src/lib/assistant/api.ts : apiFetch<T> (fetch relatif uniquement, Content-Type JSON, erreurs uniformes {error} → ApiError, timeout réseau → message « Serveur injoignable »)
+- Créé src/lib/assistant/tts.ts : file d'attente séquentielle speechSynthesis (utterance.onend/onerror → suivant), speak(text,{voiceName,lang,volume}) → boolean, cancelSpeech() sur beforeunload, isSpeechSynthesisSupported() — zéro réseau, jamais de crash si API absente
+- Créé src/lib/assistant/notifications.ts : getNotificationPermission / requestNotificationPermission / notify({title,body,silent,tag}) — permission vérifiée, try/catch défensif
+- Créé src/lib/assistant/format.ts : Intl fr-FR (formatTimeFR, formatDateTimeFR, formatDueRelative « dans X min/h/j », datetimeLocalToIso → ISO UTC)
+- Créé src/hooks/use-voice-assistant.ts (cœur) : GET /api/voice-preferences (fallback localStorage `devos-voice-prefs` + DEFAULT_VOICE_PREFERENCES contrat) ; boucle setInterval 30 s → POST /api/assistant/tick + tick immédiat au montage ; journal annonces (max 50, newest-first, dédoublonnage Set par announcement.id) ; spoken=true → speak + notification + toast (repli toast « Synthèse vocale indisponible » si TTS absent) ; spoken=false → notification muette seulement (jamais rejouée) ; savePrefs = PUT + miroir localStorage + toast succès/échec + revert optimiste ; expose prefs, prefsLoading, announcements, lastTick/quietHours, tasks, tasksLoading, categories (dérivées), savePrefs, refreshTasks, tickNow, speakTest, snooze(logId,5), speechSupported
+- Créé src/components/assistant/dev-os-app.tsx ('use client') : wrapper min-h-screen flex flex-col, header sticky (h1 « DevOS — Assistant vocal proactif » + badge statut dérivé prefs+suspendedUntil+quietHours du tick : actif=emerald / suspendu=amber / heures silencieuses=zinc, skeleton pendant chargement), Tabs 3 onglets, footer mt-auto border-t (heure locale 1 s, état serveur connecté/erreur, dernière synchro, fenêtre silencieuse, pb-[env(safe-area-inset-bottom)]) ; handleViewTask = bascule onglet Tâches + surlignage 6 s ; handleTaskMutated = refreshTasks + tickNow
+- Créé src/components/assistant/assistant-panel.tsx : carte statut + boutons « Tester la voix » / « Suspendre|Reprendre les annonces » (aria-pressed) ; bannière permissions (default/denied, copy FR-010/AC-010 : voix sans permission, onglet ouvert requis, bouton « Activer » → requestPermission) ; journal role="log" aria-live="polite" max-h-96 overflow-y-auto .devos-scroll : badge type (Rappel/Nouvelle tâche/Échéance/Priorité, urgente=destructive), heure fr-FR, chip source IA (default)/Préparé (outline), badge « Silencieux — non prononcée » si spoken=false, actions « Reporter 5 min » (snooze → retrait du journal) et « Voir la tâche » (si taskId)
+- Créé src/components/assistant/tasks-manager.tsx : formulaire contrôlé (titre* max200, description max2000, catégorie Input+datalist des catégories existantes, priorité Select défaut normale, échéance datetime-local → ISO, Switch rappel + Select Par défaut global/5/15/30/60 → POST /api/tasks) ; filtres statut+catégorie (client-side) ; liste max-h-96 : badge priorité (urgente=destructive/rouge, haute=amber, normale=secondary, basse=outline), statut, échéance Intl fr-FR + « (dans Xh) », rappel affiché ; actions Terminer (PATCH terminee) / Annuler (PATCH annulee) / Supprimer (Dialog confirmation → DELETE), icônes+labels min-h-11 (44px) mobile ; terminee/annulee → opacity-60 + line-through ; chaque mutation → onMutated() = refresh liste + tick immédiat ; skeletons chargement, empty states
+- Créé src/components/assistant/settings-screen.tsx : les 9 réglages FR-006 en Cards (Général switch enabled ; Rappels Select 5/15/30/60 + « Personnalisé… » → Input number clamp 1..10080 ; 3 Switchs annonces indépendants ; Heures silencieuses Switch + 2 time inputs + 7 Checkbox Lun→Dim mapping CSV 0=dim..6=sam ; Style RadioGroup naturel/professionnel/bref ; Voix et langue Select 4 langues + Select voix populées par speechSynthesis.getVoices() filtrées par langue avec événement voiceschanged, stocke voice.name, « Voix automatique » = null ; Volume Slider 0–100 avec commit → 0..1 ; Catégories autorisées badges multi-select aria-pressed, vide=toutes ; Confidentialité mode discret + urgentes contournent silencieux défaut OFF) + Card actions Tester la voix / Suspendre (redondance assumée) ; persistance immédiate via onSave → savePrefs (PUT + toast + miroir localStorage)
+- Modifié src/app/layout.tsx : metadata title/description DevOS, lang="fr", retrait favicon CDN externe scaffold, Toaster conservé
+- Modifié src/app/page.tsx : server component SANS 'use client' → rend <DevOSApp /> (scaffold logo supprimé)
+- Modifié src/app/globals.css : classe .devos-scroll (scrollbar thin webkit+firefox, tokens --border/--muted-foreground)
+- Vérifications : GET / → 200, lang="fr" et h1 confirmés en SSR ; tsc --noEmit → 0 erreur dans MES fichiers ; bun run lint → exit 0, 0 erreur ; dev.log → aucun erreur compilation (404 sur /api/assistant/tick, /api/tasks, /api/voice-preferences = ATTENDU, backend en parallèle, aucune route créée côté frontend)
+
+Stage Summary:
+- Frontend FEATURE-001 complet et autonome : 10 fichiers créés/modifiés, 100 % composants shadcn existants, aucun bleu/indigo (emerald/amber/zinc/red sémantiques), responsive 390→1280px, cibles tactiles ≥44px mobile
+- Architecture : DevOSApp (orchestration) → useVoiceAssistant (unique source de données client : prefs/tick/journal/tâches) → 3 panneaux présentationnels ; fetch 100 % relatif ; dédoublonnage client par announcement.id (clé anti-doublon ReminderLog serveur) ; P1→P4 de la spec UX couverts (permission optionnelle, snooze, silencieux sans rattrapage affiché « non prononcée », recalcul après mutation)
+- Décisions : pas de toast à chaque échec de tick 30 s (anti-spam, état serveur au footer) ; badge statut « Suspendu » couvre enabled=false OU suspended ; volume commit-on-release pour éviter un PUT par pixel ; Select « Personnalisé » géré par état local customReminder (Select contrôlé par prefs)
+- Transmis backend : endpoints attendus strictement selon contrat v1 (tick, voice-preferences GET/PUT, tasks GET/POST, tasks/[id] PATCH/DELETE, snooze, test-voice) — à leur livraison, les 404 disparaissent sans changement frontend ; NOTÉ (hors périmètre) : src/lib/assistant/scheduler.ts (agent BACKEND) a une erreur TS signalée par tsc (Property 'urgent' does not exist on type 'Decision') à corriger par son owner
+
+---
+Task ID: 12-a/13-a/15/16/17
+Agent: AGENT BACKEND
+Task: FEATURE-001 — backend complet : schéma Prisma, scheduler état dérivé (ADR-002), lib métier (templates/quiet-hours/ai), 7 endpoints API contrat v1, seed
+
+Work Log:
+- Lecture worklog.md, .ai/API_CONTRACTS.md (contrat v1 AUTHORITATIF), ADR-002 + inspection SDK z-ai-web-dev-sdk 0.0.18 (dist/index.d.ts : ZAI.create() + chat.completions.create)
+- prisma/schema.prisma : DEBT-001 corrigée (User.posts Post[] / Post.author User @relation onDelete: Cascade) ; ajout Task, VoicePreferences (singleton id="default"), ReminderLog (@@unique([taskId,type,scheduledFor])) exactement selon la mission ; `bun run db:push` OK (sync 13 ms, client généré)
+- src/lib/assistant/templates.ts : builders FR type×style(naturel/professionnel/bref)×privacyMode + humanizeDelay/formatDelay ; exemples de la spec respectés verbatim (« Bonjour ! Dans {delay}, tu as prévu : {title}. », « C'est le moment : … », privacy = génériques sans titre) ; AUCUNE donnée hors des faits passés en paramètre
+- src/lib/assistant/quiet-hours.ts : isQuietHours → {active, window} ; parse HH:mm, wrap minuit (22:00→07:00), jours CSV 0..6 appliqués au jour du DÉBUT de fenêtre, fuseau UTC documenté (Africa/Abidjan=UTC+0) ; start==end → fenêtre nulle
+- src/lib/assistant/ai.ts : reformulate(templateMessage, facts) serveur uniquement, import dynamique ZAI.create(), prompt système strict anti-invention, Promise.race timeout 4 s + try/catch global → null ; contrat d'intégrité documenté (facts = seules infos autorisées dans le message)
+- src/lib/assistant/scheduler.ts : computeTick(now, prefs, tasks, recentLogs) PUR (décisions a→d : enabled/suspension → expires fenêtres dépassées zéro rattrapage ; candidats reminder [dueAt−offset, +15 min], deadline [dueAt, +15 min], new_task [45 s + catégorie autorisée + anti-frénésie 60 s], priority bucket minuit UTC 1/jour/tâche ; filtrage silencieux spoken = !quiet || (urgente && urgentOverrideQuiet)) ; runTick = orchestration (charge → résolution dédup e : create/skip/retrigger selon statut log et snoozedUntil → LLM séquentiel style naturel annonces parlées uniquement → persistance upsert/update) ; getOrCreatePreferences
+- Routes API (Next 16, params Promise, Zod strict partout, erreurs uniformes { error}) : GET /api/health (SELECT 1 réel, 500 si DB KO) ; GET/PUT /api/voice-preferences (upsert singleton, Zod partiel strict : volume 0..1, offsets 1..10080, HH:mm regex, quietDays ^[0-6](,[0-6])*$, suspendedUntil ISO|null) ; GET/POST /api/tasks (tri dueAt asc nulls-last puis createdAt desc en JS ; 201) ; PATCH/DELETE /api/tasks/[id] (status ∈ en_cours|terminee|annulee, 404 si absent) ; POST /api/assistant/tick ({now?} → {announcements, now, quietHours}) ; POST /api/assistant/snooze ({logId, minutes 1..1440} → status='reporte', snoozedUntil, firedAt=null) ; POST /api/assistant/test-voice (builders prod, tâche fictive « Finaliser le déploiement du projet DevOS », AUCUN log) ; SUPPRESSION de src/app/api/route.ts (démo → 404, DEBT-002)
+- Sérialisation stricte contrat v1 (src/lib/serialize.ts) : dates ISO, exactement les champs du contrat
+- scripts/seed.ts (`bun scripts/seed.ts`) : 3 tâches (déploiement/dev/haute/+1h exactement rappel ON ; synchronisation/dev/urgente/+2h ; ordinateur-téléphone/general/normale/+3h) + singleton prefs ; exécuté avec succès
+- Tests curl complets localhost:3000 (voir Stage Summary pour les preuves) ; 3 bugs détectés et corrigés en cours de route : (1) LLM Promise.all → rafales 429 du SDK → passage en séquentiel ; (2) privacyMode : le LLM recevait le titre et le réinsérait dans le message discret → faits filtrés (title/priority = null si privacyMode) ; (3) retrigger d'un 'reporte' échu au-delà de la fenêtre : champ urgent manquant (ReferenceError fields) → reporté dans PendingAnnouncement
+- bun run lint : 0 erreur ; dev.log final propre (200/201/404/400 attendus, aucune exception)
+
+Stage Summary:
+- Backend FEATURE-001 livré et prouvé par curl : health {status:'ok',db:'ok',version:'1.0.0'} ; IDEMPOTENCE tick prouvée (tick 1 → 3 annonces reminder+new_task+priority pour une nouvelle tâche ; ticks 2 et 3 → []) ; POST /api/tasks → 201 contrat exact ; PUT prefs (volume 0.5 OK, volume 2 → 400, champ inconnu → 400) ; snooze → {ok:true}, 404 si log absent, re-déclenchement à l'échéance du report (même log.id, statut re-'annonce') ; test-voice bref=template exact / naturel=messageSource 'ia'
+- Règles d'intégrité prouvées en intégration : AC-007 (PATCH status=terminee → plus aucune annonce) ; heures silencieuses (annonce muette spoken=false + log 'expire', tick suivant → rien : JAMAIS rejouée, FR-007) ; urgentOverrideQuiet (urgente parlée pendant silencieux, spoken=true) ; désactivation enabled=false puis réactivation → ZÉRO rattrapage (log reminder 'expire' avec scheduledFor dépassé) ; anti-frénésie new_task 1/60 s observée (2e tâche créée < 60 s → expire) ; privacyMode → message vocal générique SANS titre ni priorité (correction LLM vérifiée par re-test)
+- LLM = décoratif et résilient (ADR-002) : 429 SDK observés → fallback template automatique (messageSource 'template') ; reformulations réussies respectent les faits (titre exact, délai, priorité)
+- Décisions documentées : expire rétrospectif limité à reminder/deadline (pas de flood historique pour new_task/priority) ; reformulation LLM réservée aux annonces parlées ; LLM séquentiel anti-429 ; catégorie new_task filtrée par allowedCategories CSV insensible à la casse
+- État final : DB = 3 tâches seedées + prefs défauts ; frontend (AGENT FRONTEND) peut consommer le contrat v1 tel quel ; 3 corrections à retenir pour la revue (429 séquentiel, fuite privacyMode, urgent retrigger)
+
+---
+Task ID: 19/20
+Agent: AGENT DOC + AGENT COMMIT + AGENT 2 (QA)
+Task: Clôture documentaire FEATURE-001 + session de commits conventionnels + consolidation QA
+
+Work Log:
+- Lecture du worklog complet (Tasks 1→12-a/13-a/15/16/17) + fichiers .ai/ pertinents (REQUIREMENTS, ADR-001/002, TEST_PLAN, REVIEW_LOG, DEBT_REPORT, TASKS, COMMIT_LOG)
+- Smoke QA de cohérence avant clôture : GET / → 200 ; GET /api/health → {status:'ok',db:'ok'} ; POST tick → [] (idempotence toujours vérifiée)
+- SESSION DE COMMITS (AGENT COMMIT) — git status vérifié avant, inventaire regroupé exactement en 4 groupes conventionnels atomiques, 0 fichier .env :
+  · `7ddb0c9` feat(assistant): backend FEATURE-001 — schéma Prisma (Task/VoicePreferences/ReminderLog), scheduler état dérivé, templates, heure silencieuse, routes API v1, seed (prisma/, src/app/api/ + suppression endpoint démo, src/lib/assistant/{scheduler,templates,quiet-hours,ai}.ts, api-helpers, serialize, scripts/seed.ts ; db/ ignoré par .gitignore)
+  · `f2485b5` feat(assistant): frontend FEATURE-001 — UI 3 onglets (Assistant/Tâches/Paramètres), tick 30 s, TTS Web Speech, notifications, journal vocal (src/components/assistant/, use-voice-assistant.ts, src/lib/assistant/{api,tts,notifications,format}.ts, src/types/, src/app/, globals.css)
+  · `eb1a3d9` chore(quality): vague dette — TS strict noImplicitAny, ignoreBuildErrors:false, strictMode, headers sécurité, ESLint vague 1, README, use-toast fix (next.config.ts, tsconfig.json, eslint.config.mjs, README.md, use-toast.ts)
+  · docs(ai): gouvernance FEATURE-001 — UX/ADRs/contrat v1, journaux, TASKS, dette à jour (.ai/, worklog.md) — commit de clôture de session
+- Pre-commit : bun run lint → exit 0 ; validation git log --oneline en fin de session
+- TASKS.xlsx (QA) : script .zscripts/close_feature001.py — TASK-006 → TERMINÉ 100% PASS ; ajout TASK-007→014 (M1→M7 + Phase 5/6, Epic=PRODUIT, 19 colonnes, commits liés réels) ; TOTAL recalé row 19 (14 tâches, 100%, Terminées 14/0/0/0) ; purge du bug latent de note dupliquée (rows 12/13 — cause racine identifiée : `cell(value=None)` est un no-op openpyxl, affectation par attribut requise) ; STATISTIQUES recalées (plages H/I/O 5:18, dette 15 items — 11 TRAITÉ · 2 EN COURS · 1 REPORTÉ · 1 ACCEPTÉE)
+- Pipeline xlsx exécuté (skills/xlsx/xlsx.py) : recalc 0 erreur/6 formules · audit 0 erreur (4 zéros légitimes : en cours/à faire/bloquées/bugs) · scan 0 finding · **validate → passed, 0 issue**
+- TEST_PLAN.md : campagne E2E FEATURE-001 ajoutée à la matrice — AC-002/003/004/005/008/009/010/012 + FR-002 + snooze + Suspendre + responsive = PASS avec preuves (annonce « Rappel : dans 15 minutes… », DB status='expire'/'reporte', anti-frénésie 29 s, 70 s sans doublon) ; AC-001 PASS (défauts Prisma vérifiés code) ; AC-007 PASS (curl backend) ; **AC-011 = N/A justifié (ADR-001 — arrière-plan natif hors sandbox, aucune simulation trompeuse)** ; smoke tests S1-S4 actualisés + S5 (idempotence tick)
+- REVIEW_LOG.md : REV-003 ajoutée — FEATURE-001 APPROUVÉE (portée : lint 0, tsc 0, idempotence tick ×2, intégrité IA template-first ADR-002, anti-doublons DB, zéro rattrapage ; remarque mineure sans risque : LLM aussi tenté en style professionnel — fallback OK)
+- CHANGELOG.md : entrée [0.3.0-feature001] — résumé utilisateur (annonces vocales, 9 réglages, silencieux, snooze, anti-doublons, IA optionnelle), dette 11/15 traitée, fichiers clés, preuves de validation, hashes de session
+- TASKS.md miroir synchronisé (14/14 terminées, 100%, REV-003, hashes) ; DAILY_STANDUP.md session 3 ; TEAM_STATUS.md (phase clôture, KPIs lint 0/tsc 0/0 CRITIQUE, dette 11/15)
+- COMMIT_LOG.md : 4 commits de session tracés (hashes réels)
+- AUCUN fichier src/**, prisma/** ou config modifié par cet agent (code gelé après revue) — seuls .ai/**, worklog.md et .zscripts/close_feature001.py (outil de reporting, hors code applicatif)
+
+Stage Summary:
+- FEATURE-001 officiellement clôturée : 14/14 tâches TERMINÉ (100%), validate xlsx passed, REV-003 approuvée, dette 11/15 traitée
+- 4 commits conventionnels atomiques : 7ddb0c9, f2485b5, eb1a3d9 + docs(ai) — inventaire git propre, .env jamais commité
+- Reste : AUDIT-002 (Task 21) avant toute mise en prod réelle ; ESLint vague 2 et CSP à cadrer à l'audit
