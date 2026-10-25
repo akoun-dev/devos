@@ -271,3 +271,28 @@ Work Log:
 Stage Summary:
 - Toutes les conditions prod faisables sans risque sont exécutées ; restent avant exposition réelle : CSP (DEBT-013), découpage UI (017), doc obsolète (018), consignation commits auto (019)
 - AUDIT-002 : 77/100, verdict AUTORISÉ SOUS CONDITION — conditions majoritairement soldées
+
+---
+Task ID: 22
+Agent: ORCHESTRATEUR PRINCIPAL (CTO) — exécution directe (couplage fort schéma/API/UI ; délégation jugée contre-productive pour la cohérence)
+Task: Exigence CTO « Ajoute un système auth » — FEATURE-AUTH : authentification complète + scopage multi-utilisateurs
+
+Work Log:
+- Lecture gouvernance (worklog, package.json, schema, routes, scheduler, hooks) AVANT travaux ; constat clé : next-auth PROSCRIT (DEBT-016, CVE critique) → décision ADR-003 = session maison
+- Analyse d'impact : données mono-utilisateur (VoicePreferences id="default", tâches globales) → auth « portail » jugée trompeuse ; décision de scopage multi-utilisateurs INTÉGRAL
+- 22-1 : bun add bcryptjs@3.0.3 jose@6.2.13 ; JWT_SECRET (64 car.) généré et ajouté à .env (hors git, vérifié git check-ignore)
+- 22-2 : schema.prisma — User.passwordHash requis, Task.userId (requis + @@index + onDelete:Cascade), VoicePreferences.userId @unique + Cascade (suppression du @id "default") ; purge préalable : 8 logs + 3 tâches seed + 1 prefs (0 utilisateur en base, 0 donnée réelle) ; prisma validate OK ; db push + generate OK
+- 22-3 : src/lib/auth.ts (serveur uniquement) — hash/verify bcrypt (coût 10), signSessionToken/verifySessionToken (HS256, TTL 7 j), getSessionUser() via cookies() (0 middleware — posture AUDIT-002 conservée), sessionCookieOptions (httpOnly, SameSite=Lax, Secure si prod), dummyPasswordCheck (égalisation temporelle, hash factice RÉEL précalculé + try/catch)
+- 22-4 : 4 routes /api/auth/* — register (Zod email regex trim/minuscules, password 8..72, 409 doublon via P2002, 201 + Set-Cookie), login (message générique + dummy check si email inconnu), logout (cookie maxAge 0, idempotent), me (401 ou {user})
+- 22-5 : scopage — scheduler.getOrCreatePreferences(userId) (findUnique par userId + course concurrente gérée) ; runTick(now, userId) : tâches where userId + recentLogs OR(taskId in actifs, recent AND task.userId) (anti-frénésie par utilisateur) ; tasks GET/POST, tasks/[id] PATCH/DELETE (findFirst id+userId → 404), voice-preferences GET/PUT (userId), tick (401 + runTick(user.id)), snooze (ownership via include task → 404 générique), test-voice (401 — endpoint LLM jamais public)
+- 22-6 : types AuthUser ; use-session.ts (me/login/register/logout/signOutLocal) ; use-voice-assistant(onUnauthorized) — détection ApiError 401 dans les 6 catchs (toasts masqués si 401), callback stable via ref ; auth-gate.tsx (écran d'attente role=status → formulaire Tabs Connexion/Inscription shadcn ARIA + autocomplete + h-11 → DevOSApp) ; dev-os-app.tsx (props user/onLogout/onSessionExpired, chip identité initiales + nom + bouton déconnexion aria-label) ; page.tsx → AuthGate ; PREFS_STORAGE_KEY exporté et miroir localStorage purgé à CHAQUE transition d'auth (anti-fuite inter-comptes)
+- 22-7 : lint exit 0 ; pkill next dev + relance nohup ; GET / 200 + health ok ; 18 tests curl PASS : register 201 / me 200 / tasks sans cookie 401 / tâche 201 / tick 200 (2 annonces IA : new_task + priority) / prefs auto-créées 200 / logout / me 401 / login erroné 401 / login 200 / doublon 409 / faible 400 / **isolation** : Bob liste vide 200, PATCH tâche Alice 404, DELETE 404, snooze log Alice 404, tâche Alice intacte ; dev.log sans erreur
+- 22-8 : agent-browser — formulaire auth rendu (tabs, labels, required) ; inscription Carol (nom+email+mdp) → app + toast « Bienvenue, Carol Dupont ! » + chip « CD » + badge Actif ; déconnexion → formulaire + toast « Déconnecté » ; reconnexion → app ; création tâche via UI → visible + annonce new_task dans le journal (tick par utilisateur OK) ; captures iPhone 14 + desktop (chip identité responsive : nom masqué < sm, initiales visibles) ; footer collé (bottom 1091,75 ≈ scrollH 1092) ; console 0 erreur
+- 22-9 : ADR-003 (.ai/ADR/) ; API_CONTRACTS.md v1.1 AUTHORITATIF (4 endpoints auth + 9 métier Auth: session + AuthUser + règle 404 générique inter-users) ; TASKS.md TASK-015 + santé 77/100 ; DEBT-021 OUVERT (rate limiting /api/auth/*) + DEBT-020 complété ; CHANGELOG 0.4.0-feature-auth ; TASKS.xlsx (insert row 19 + styles copiés + TOTAL 15, validate reload OK) ; commits 67897bf (code) + e22aee5 (docs) + 1 commit gouvernance (xlsx + worklog)
+
+Stage Summary:
+- **FEATURE-AUTH livrée de bout en bout** : session JWT maison httpOnly (ADR-003), 4 endpoints auth, 9 endpoints métier rescoppés, scheduler strictement par utilisateur, AuthGate UI complet — l'app n'est plus accessible sans compte
+- Isolation inter-utilisateurs PUVES : accès croisé = 404 sans divulgation ; anti-frénésie/déduplication/quiet-hours inchangées mais par utilisateur
+- BD migrée proprement (singleton "default" supprimé, base vierge — cohérent DEBT-020) ; JWT_SECRET jamais commité
+- Décisions : next-auth définitivement proscrit ; tick piloté par session (cohérent ADR-002 état dérivé) ; miroir localStorage purgé aux transitions (risque résiduel documenté dans ADR-003)
+- Ouvert : DEBT-021 (rate limiting avant exposition réseau réelle) ; **AUDIT-003 déclenché** (règle : audit après chaque feature) — points de vigilance : ADR-003, contrats v1.1, scopage, DEBT-021
