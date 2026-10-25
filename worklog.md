@@ -79,3 +79,21 @@ Stage Summary:
 - Système multi-agents OPÉRATIONNEL : gouvernance complète, backlog à jour, audit baseline publié (70/100), DEBT-014 levé, git historisé proprement (4 commits conventionnels)
 - Repo hygiénisé : .env non suivi, artefacts DB ignorés, scaffold entièrement versionné
 - État : en attente des premières exigences du CTO (TASK-005) pour lancer le lifecycle complet Phase 0→7
+
+---
+Task ID: 8
+Agent: AGENT 2 (QA/PO) + AGENT 1 (Tech Lead)
+Task: Capture du contexte produit DevOS (module Assistant vocal proactif et rappels intelligents) + analyse d'écart plateforme — SANS développement (verrou « GO »)
+
+Work Log:
+- Capture intégrale de la spec CTO dans .ai/REQUIREMENTS.md : objectif, préférences initiales (9), exigences fonctionnelles FR-001→FR-010 (rappels anticipés, annonces nouvelles tâches/échéances/priorités, style conversationnel, écran Paramètres→Assistant vocal, heures silencieuses, arrière-plan, architecture 8 composants, sécurité/confidentialité), critères de réception AC-001→AC-012, ordre de réalisation en 7 jalons
+- Règle produit d'intégrité consignée : messages fidèles aux données DevOS ; IA ne modifie jamais priorité/échéance ; fiabilité des rappels > génération IA
+- Analyse d'écart plateforme (REQUIREMENTS.md §5) : sandbox = Next.js web ; correspondances proposées — UI Paramètres ✅, ReminderScheduler ✅, Notifications → Web Notifications API (permission explicite), TextToSpeechProvider → abstraction + Web Speech API (voix locales), Drift → Prisma/SQLite, Supabase → SyncIntegration simulée, Gemma → z-ai LLM serveur + fallback messages préparés (AC-012), arrière-plan Android/Linux → NON réalisable ici, documenté pour la cible Flutter (aucune simulation trompeuse)
+- PROJECT_CONTEXT.md mis à jour (produit = DevOS, cible déclarée, adaptation sandbox, historique)
+- TASKS.xlsx : TASK-005 → TERMINÉ (capture) ; TASK-006 créée (FEATURE-001, À FAIRE, verrouillée attend « GO ») ; TOTAL déplacé/corrigé (6 tâches, 83%) ; STATISTIQUES recalées ; validate xlsx : passed
+- TASKS.md miroir synchronisé ; TEAM_STATUS.md (phase : verrou GO) ; DAILY_STANDUP session 2
+- Aucun fichier src/, prisma/, config modifié — conformité à la consigne du CTO
+
+Stage Summary:
+- Exigences DevOS entièrement capturées et traçables ; adaptations plateforme définies et honnêtes ; ADR-001 (adaptation plateforme) et ADR-002 (scheduler indépendant de l'IA) prévus à la Phase 2
+- Système en STANDBY PRODUIT : tout le lifecycle FEATURE-001 est prêt à démarrer au signal « GO »

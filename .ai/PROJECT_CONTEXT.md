@@ -8,8 +8,9 @@
 |---|---|---|
 | Nom technique | `nextjs_tailwind_shadcn_ts` | `package.json → name` |
 | Version | 0.2.1 | `package.json → version` |
-| Nature | **Scaffold vierge** — aucune fonctionnalité métier | `src/app/page.tsx` (logo seul) |
-| Produit cible | **À définir par le CTO** (aucune exigence utilisateur reçue à ce jour) | — |
+| Produit | **DevOS** — assistant de développement personnel · Module en cours : **Assistant vocal proactif et rappels intelligents** (exigences capturées : `REQUIREMENTS.md` FR-001→010, AC-001→012) | Contexte CTO 2026-10-25 |
+| Cible déclarée | Flutter/Dart (Android/Linux) · SQLite Drift · Supabase · IA locale Gemma | spec DevOS |
+| Adaptation sandbox | **Web Next.js 16** (équivalents : Prisma/SQLite, Web Speech API, Web Notifications, LLM z-ai côté serveur + fallback préparé) — écarts documentés, aucun simulé comme natif | `REQUIREMENTS.md` §5 |
 
 ## 2. Stack détectée (NON NÉGOCIABLE)
 
@@ -72,4 +73,5 @@ src/
 
 ## 7. Historique du contexte
 
-- 2026-10-25 : Prise en charge du projet par le système multi-agents. Analyse initiale complète (AGENT 1). En attente des premières exigences du CTO.
+- 2026-10-25 : Prise en charge du projet par le système multi-agents. Analyse initiale complète (AGENT 1). Bootstrap gouvernance + AUDIT-001 (70/100).
+- 2026-10-25 : Contexte produit reçu — **DevOS, module « Assistant vocal proactif et rappels intelligents »**. Exigences capturées (FR-001→010, AC-001→012). Analyse d'écart plateforme consignée. **Développement bloqué en attente du signal « GO » du CTO.**

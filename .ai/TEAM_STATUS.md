@@ -1,6 +1,6 @@
 # 📈 ÉTAT DE L'ÉQUIPE (TEAM_STATUS)
 
-> **Dernière mise à jour** : 2026-10-25 19:55 UTC · **Phase système** : BOOTSTRAP TERMINÉ — EN ATTENTE DES EXIGENCES CTO
+> **Dernière mise à jour** : 2026-10-25 20:20 UTC · **Phase système** : CONTEXTE DEVOS CAPTURÉ — VERROUILLÉ EN ATTENTE DU SIGNAL « GO » DU CTO
 
 ════════════════════════════════════
 ## RÉPARTITION DE L'ÉQUIPE
@@ -23,22 +23,22 @@
 ## RAPPORT D'ÉTAT PERMANENT
 ════════════════════════════════════
 
-**Tâche actuelle** : Veille système — en attente des premières exigences du CTO (lancement du lifecycle Phase 0→7)
+**Tâche actuelle** : Verrou système — contexte produit DevOS capturé (REQUIREMENTS.md), développement interdit avant signal « GO »
 
 | KPI | Valeur |
 |---|---|
-| Terminées | 4 (bootstrap + audit) |
+| Terminées | 5 (bootstrap + audit + capture exigences) |
 | En cours | 0 |
+| À faire | 1 (TASK-006 FEATURE-001 — **verrouillée attend GO**) |
 | Bloquées | 0 |
 | Bugs | 0 |
-| Vulnérabilités | 0 (AUDIT-001 : surface minimale, headers sécurité à ajouter — DEBT-013) |
-| Problèmes a11y | 0 bloquant (h1 manquante sur / — DEBT-011, MINEUR) |
-| Problèmes perf | 0 (TTFB 26,6 ms à chaud — budget respecté) |
+| Vulnérabilités | 0 (AUDIT-001 : headers sécurité à ajouter — DEBT-013) |
+| Problèmes a11y | 0 bloquant (h1 manquante sur / — DEBT-011) |
+| Problèmes perf | 0 (TTFB 26,6 ms à chaud) |
 | Incidents intégrité | 0 |
-| Commits rejetés | 0 |
-| Revues bloquantes | 0 (2 revues bootstrap demandées au Reviewer) |
-| **Score santé projet** | **70/100** (AUDIT-001 · moyenne 10 dimensions) |
-| Dette technique | 15 items (7 MAJEUR / 8 MINEUR / 0 CRITIQUE — DEBT_REPORT.md) |
+| **Score santé projet** | **70/100** (AUDIT-001) |
+| Dette technique | 15 items (7 MAJEUR / 8 MINEUR) |
+| Écarts plateforme documentés | 4 (arrière-plan Android/Linux, Supabase, Gemma, notifications natives — cf. REQUIREMENTS.md §5) |
 
 **Prochaine action** :
 - Back : veille (aucune exigence) — à la 1re feature : traiter DEBT-001 (relation Prisma) + DEBT-002 (endpoint health)
@@ -52,5 +52,5 @@
 - UX/UI : veille
 - Audit : AUDIT-002 après 5 features ou sur demande / avant 1re prod
 
-**En attente de décision CTO** : premières exigences produit → lancement du lifecycle (Phase 0 UX → Phase 1 Spec).
+**En attente de décision CTO** : signal **« GO »** → lancement immédiat du lifecycle FEATURE-001 (Phase 0 UX → Phase 1 Spec → Phase 2 Tech Design + ADR → Phase 3 Découpage → Phase 4 Implémentation).
 ════════════════════════════════════
