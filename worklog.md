@@ -97,3 +97,20 @@ Work Log:
 Stage Summary:
 - Exigences DevOS entièrement capturées et traçables ; adaptations plateforme définies et honnêtes ; ADR-001 (adaptation plateforme) et ADR-002 (scheduler indépendant de l'IA) prévus à la Phase 2
 - Système en STANDBY PRODUIT : tout le lifecycle FEATURE-001 est prêt à démarrer au signal « GO »
+
+---
+Task ID: 9
+Agent: ORCHESTRATEUR PRINCIPAL (CTO)
+Task: Répartition officielle des fonctionnalités DevOS (FEATURE-001) entre les agents — planification uniquement, verrou « GO » respecté
+
+Work Log:
+- Relecture worklog (Tasks 1→8) + REQUIREMENTS.md + TASKS.md pour vérifier l'état exact avant réponse au CTO
+- Constat : répartition jusqu'ici implicite (TASK-006 = epic unique) → formalisation exigée
+- Rédaction `.ai/SPECS/FEATURE-001-PLAN.md` : 12 Task IDs (10-a ∥ 10-b → 21), mapping agents × exigences (FR/AC) × 7 jalons CTO, parallélismes, dépendances, rôles transverses permanents, 5 risques avec mitigations et owners
+- Mise à jour HANDOFF/LEAD_TO_TEAM.md : mission FEATURE-001 diffusée à l'équipe avec pointeur vers le plan
+- Aucun fichier src/, prisma/, config applicatif modifié — verrou « GO » intact
+
+Stage Summary:
+- Répartition officielle publiée : chaque exigence FR-001→010 et AC-001→012 a un agent owner et un Task ID
+- Séquence d'exécution prête : Phase 0 UX ∥ ADR (10-a/10-b) → découpage (11) → M1→M7 (12→18) → revues (19) → E2E+doc (20) → AUDIT-002 (21)
+- Système en STANDBY : exécution démarrera uniquement au signal « GO » du CTO
