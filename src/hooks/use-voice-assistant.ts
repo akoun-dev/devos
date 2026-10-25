@@ -54,7 +54,8 @@ export const DEFAULT_VOICE_PREFERENCES: VoicePreferences = {
   announceNewTasks: true,
   announceDeadlines: true,
   announcePriorities: true,
-  quietHoursEnabled: false,
+  // Aligné sur le défaut serveur Prisma (FR-007 : heures silencieuses activées par défaut) — DEBT-017
+  quietHoursEnabled: true,
   quietStart: '22:00',
   quietEnd: '07:00',
   quietDays: '0,1,2,3,4,5,6',
