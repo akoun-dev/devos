@@ -227,3 +227,47 @@ Stage Summary:
 - FEATURE-001 officiellement clôturée : 14/14 tâches TERMINÉ (100%), validate xlsx passed, REV-003 approuvée, dette 11/15 traitée
 - 4 commits conventionnels atomiques : 7ddb0c9, f2485b5, eb1a3d9 + docs(ai) — inventaire git propre, .env jamais commité
 - Reste : AUDIT-002 (Task 21) avant toute mise en prod réelle ; ESLint vague 2 et CSP à cadrer à l'audit
+
+---
+Task ID: 21
+Agent: AGENT AUDIT GLOBAL
+Task: AUDIT GLOBAL #002 — audit global post-FEATURE-001 et verdict de mise en production (seuil ≥ 60/100)
+
+Work Log:
+- Lecture intégrale du worklog (11 sections antérieures intactes, Tasks 1-2 → 19/20) + AUDIT-001 (méthodologie/grille réutilisée à l'identique) + DEBT_REPORT.md + AUDIT_REPORT.md + SYSTEM_COMPLIANCE.md
+- Gates qualité exécutés : `bun run lint` → **exit 0** ; `bunx tsc --noEmit` → **0 erreur** (noImplicitAny:true, examples/skills exclus tsconfig:39-43) — preuve que le strict réactivé passe réellement
+- Runtime prouvé par curl (12 appels) : `curl -sI /` → 200 + 5 headers sécurité (nosniff, SAMEORIGIN, Referrer-Policy, Permissions-Policy, DNS-Prefetch) + **X-Powered-By ABSENT** ; `GET /api/health` → `{"status":"ok","db":"ok","time":…,"version":"1.0.0"}` ; **idempotence tick** : 3 × POST (announcements:[] au 2e/3e — enveloppe {announcements,now,quietHours} = contrat) ; **validation API** : PUT voice-preferences volume:2 → 400 (« Too big: expected number to be <=1 »), POST /api/tasks sans title → 400 ; GET /api/tasks → 7 tâches (3 seedées + 4 artefacts E2E — constat DEBT-020) ; test-voice bref → template exact, messageSource "template"
+- Git : `git log --oneline -10` → 11/14 commits conventionnels atomiques + **3 auto-commits UUID non tracés** (185d9d4, e108919, 3b27e97 — DEBT-019, ex. 3b27e97 = DEBT_REPORT 1 ligne) ; `git status --short` → arbre propre (1 seul résidu = tool-results/ de l'outil d'audit, supprimé en fin de mission) ; .env non suivi
+- Scans : `rg -c '"off"' eslint.config.mjs` = 27 en base MAIS vague 1 active (bloc src/** lignes 46-56 : prefer-const, no-var, no-console(warn/error), eqeqeq, no-unused-vars) ; TODO/FIXME/HACK = 0 ; console.log = 0 (console.error dans catch uniquement) ; `rg -l "z-ai-web-dev-sdk" src/` → **uniquement src/lib/assistant/ai.ts** (import dynamique :53, timeout 4 s, fallback null, faits filtrés privacyMode :scheduler.ts:425-427)
+- wc -l assistant : scheduler 473, use-voice-assistant 342, assistant-panel 300, dev-os-app 194, templates 168… MAIS **settings-screen.tsx = 632 et tasks-manager.tsx = 531** (>500, non vendus — DEBT-017) ; sidebar.tsx 726 inchangé (DEBT-012 acceptée)
+- a11y par lecture de code : h1 unique (rg '<h1' → 1, dev-os-app.tsx:101), lang="fr" (layout.tsx:28), role="log" + aria-live="polite" + aria-label (assistant-panel.tsx:224-228), aria-pressed (:155), role="note" (:169), aria-label dynamiques (:274,285), volume aria-live (settings-screen.tsx:518), cibles min-h-11, 19-20 labels/composant
+- Règles produit vérifiées dans scheduler.ts + schema.prisma : filtre `status === "en_cours"` (:181, AC-007) ; expire sans rattrapage quand inactif (:186-198) ; resolveExisting 'annonce'/'expire' → skip JAMAIS rejoués (:303-311) ; @@unique([taskId,type,scheduledFor]) (schema.prisma:86) ; anti-frénésie 60 s (:202-204) ; priorité 1/jour/tâche bucket minuit UTC (:103-105,158-162) ; quiet-hours wrap minuit UTC (quiet-hours.ts:47-81)
+- Découverte sécurité majeure : `bun audit` → **94 advisories uniques (5 CRITIQUE / 57 HIGH / 39 MOD / 6 LOW)** — next@16.1.3 < 16.2.5 (4 RCE critiques conditionnels + ~9 HIGH ; 0 chemin actif : 0 middleware/Server Actions/next/image, hôte Linux), **next-auth@4.24.13 CRITIQUE et 0 fois importé** (rg → 0), zod@4.3.5 HIGH → **DEBT-016 (MAJEUR) = condition PROD**
+- Doc↔code : 7 endpoints contrat v1 = 7 routes réelles (ls -R src/app/api) ; README ↔ package.json scripts exacts ; TASKS.xlsx ↔ TASKS.md cohérents (parse openpyxl : 14 tâches TERMINÉ 100 %, dims B2:T21) ; 4 écarts mineurs documentés (C1 ARCHITECTURE.md §4/§6 obsolètes, C2 API_CONTRACTS labels de sections, C3 défauts quietHoursEnabled client false vs serveur true, + artefacts DB) — DEBT-018
+- Clôture dette spot-checkée : DEBT-001 (relation déclarée schema.prisma:30 + Cascade), DEBT-004 (ignoreBuildErrors:false), DEBT-006 (noImplicitAny:true), DEBT-009 (README présent), DEBT-012 (sidebar 726 + disable documenté hooks/use-toast.ts:21) — statuts du registre exacts
+- Santé multi-agents : REV-003 APPROUVÉE (REVIEW_LOG), COMMIT_LOG 8 commits tracés, CHANGELOG 0.3.0, TEAM_STATUS/DAILY_STANDUP à jour, 42 fichiers .ai/
+- Rédaction des livrables : `.ai/AUDITS/AUDIT-002-2026-10-25.md` (rapport complet 10 sections), `.ai/AUDIT_REPORT.md` (remplacé : synthèse + verdict), `.ai/SYSTEM_COMPLIANCE.md` (re-score 87 %), `.ai/DEBT_REPORT.md` (SEULEMENT les écarts factuels : ajout DEBT-016→020 + stats 15→20 + plan mis à jour — rien d'autre touché)
+- AUCUN fichier applicatif (src/**, prisma/**, package.json, configs) modifié — audit pur ; scratch tool-results/ nettoyé
+
+Stage Summary:
+- **Score global AUDIT-002 : 77/100** (+7 vs 70) — archi 90, qualité 76, tests 30, doc 84, sécurité 62, a11y 85, perf 93, conformité 87, dette 74, santé 89
+- **Constats : 0 CRITIQUE · 1 MAJEUR nouveau (DEBT-016 dépendances) · 4 MINEUR nouveaux (DEBT-017→020)** + dette connue restante (003 vague 2, 013 CSP, 010 reporté, 012 acceptée)
+- **Verdict PROD : ✅ AUTORISÉ SOUS CONDITION** — conditions avant exposition réelle : (1) bun update next ≥16.2.5 + zod ≥4.6.6 + retrait next-auth → bun audit propre ; (2) CSP finalisée ; (3) purge DB test. Fortement recommandé : vague 2 ESLint, découpage 2 composants >500, màj ARCHITECTURE/API_CONTRACTS, consignation auto-commits
+- Conformité système re-scored **87 %** (9 RESPECTÉES / 3 PARTIELLES / 0 NON RESPECTÉE / 2 N-A) — les 3 non-respects d'AUDIT-001 levés (commits ✓, revue REV-003 ✓, tests = compensation E2E manuelle documentée)
+- Plan d'action 9 actions transmis (responsables + deadlines dans le rapport §9) ; AUDIT-003 déclenché après la prochaine feature ou avant toute exposition prod
+
+---
+Task ID: 21-bis (clôture conditions AUDIT-002)
+Agent: ORCHESTRATEUR PRINCIPAL (CTO)
+Task: Exécution des conditions faisables du verdict AUDIT-002 (AUTORISÉ SOUS CONDITION)
+
+Work Log:
+- DEBT-020 : purge des 4 artefacts E2E en DB (title notIn seed) ; 3 tâches seed restantes ; cascade logs vérifiée (0 orphelin)
+- DEBT-017 (partielle) : défaut client quietHoursEnabled aligné sur true (use-voice-assistant.ts, commenté) ; découpage des 2 composants >500 lignes reporté à la prochaine évolution UI
+- DEBT-016 : next 16.1.3 → 16.4.3, zod 4.3.5 → 4.6.7, next-auth retiré (0 import vérifié) ; serveur dev redémarré sur la nouvelle version ; preuves rejouées : GET / 200, health {ok,ok}, tick idempotent, lint exit 0 ; bun audit → 0 CRITIQUE ; résiduel 2 HIGH transitifs acceptés et documentés (DeepmergeTS non exploitable dans cet usage, brace-expansion tooling dev)
+- Registre DEBT_REPORT.md synchronisé (016 TRAITÉ, 017 EN COURS, 020 TRAITÉ)
+- Sanity navigateur post-restart : title/h1/3 onglets OK
+
+Stage Summary:
+- Toutes les conditions prod faisables sans risque sont exécutées ; restent avant exposition réelle : CSP (DEBT-013), découpage UI (017), doc obsolète (018), consignation commits auto (019)
+- AUDIT-002 : 77/100, verdict AUTORISÉ SOUS CONDITION — conditions majoritairement soldées

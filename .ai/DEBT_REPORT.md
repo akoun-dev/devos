@@ -1,6 +1,6 @@
 # 🏗️ REGISTRE DE LA DETTE TECHNIQUE (DEBT-XXX)
 
-> **Dernière mise à jour** : 2026-10-25 (UTC) · **Responsable** : AGENT AUDIT GLOBAL · **Source** : AUDIT GLOBAL #001 (baseline)
+> **Dernière mise à jour** : 2026-10-25 (UTC) · **Responsable** : AGENT AUDIT GLOBAL · **Sources** : AUDIT GLOBAL #001 (baseline, DEBT-001→015) + AUDIT GLOBAL #002 (post-FEATURE-001, ajout DEBT-016→020)
 > **Statuts** : OUVERT / EN COURS / TRAITÉ / ACCEPTÉ (dette assumée). Chaque item cite une preuve vérifiée le 2026-10-25.
 
 ## Statistiques
@@ -8,11 +8,11 @@
 | Classification | Nombre | Items |
 |---|---|---|
 | 🔴 CRITIQUE | **0** | — |
-| 🟠 MAJEUR | **7** | DEBT-001, 003, 004, 006, 010, 013, 014 |
-| 🟡 MINEUR | **8** | DEBT-002, 005, 007, 008, 009, 011, 012, 015 |
-| **Total** | **15** | 11 traité · 2 en cours (003 vague 1, 013 CSP restant) · 1 reporté (010, règle d'environnement) · 1 acceptée (012) — mise à jour FEATURE-001, 2026-10-25 |
+| 🟠 MAJEUR | **8** | DEBT-001✅, 003🔄, 004✅, 006✅, 010⏸, 013🔄, 014✅, **016 (nouveau AUDIT-002)** |
+| 🟡 MINEUR | **12** | DEBT-002✅, 005✅, 007✅, 008✅, 009✅, 011✅, 012 (acceptée), 015✅, **017→020 (nouveaux AUDIT-002)** |
+| **Total** | **20** | 11 traité · 2 en cours (003 vague 1, 013 CSP restant) · 1 reporté (010, règle d'environnement) · 1 acceptée (012) · **5 ouverts nouveaux (016→020, AUDIT-002)** — mise à jour AUDIT-002, 2026-10-25 |
 
-> Lecture : dette « d'origine scaffold » typique — rien de bloquant pour démarrer les features, mais les 7 MAJEUR doivent être soldés dans les 1-2 premières features (avant toute mise en prod réelle).
+> Lecture : dette « d'origine scaffold » typique — rien de bloquant pour démarrer les features ; le MAJEUR ouvert (DEBT-016 dépendances) est une **condition de la mise en prod réelle** (verdict AUDIT-002 : AUTORISÉ SOUS CONDITION).
 
 ## Registre
 
@@ -33,12 +33,18 @@
 | DEBT-013 | **Aucun header de sécurité configuré** (pas de `headers()` dans next.config.ts) + **`X-Powered-By: Next.js` exposé** ; absence CSP / HSTS / X-Frame-Options / X-Content-Type-Options (vérifié `curl -sI http://localhost:3000`) | MAJEUR | S | `next.config.ts` (aucun bloc `headers`), réponse HTTP `/` | Clickjacking, MIME-sniffing, énumération de stack dès exposition réelle | Configurer les headers + `poweredByHeader: false` à la 1re feature (avant toute prod) | 🔄 EN COURS 2026-10-25 (nosniff/SAMEORIGIN/Referrer/Permissions-Policy + poweredByHeader:false actifs ; CSP reportée prudemment — à cadrer à AUDIT-002) |
 | DEBT-014 | **Travail de gouvernance non commité** : 1 seul commit (`09c67ac Initial commit`) ; `git status` = `.gitignore` modifié + 19 entrées non suivies (`.ai/`, `src/`, `prisma/`, `worklog.md`, …) ; `COMMIT_LOG.md` vide | MAJEUR | S | dépôt git entier ; `.ai/COMMIT_LOG.md` | Risque de perte du bootstrap ; revue de code impossible ; traçabilité conventionnelle inexistante | Session de commits atomiques conventionnels à J+1 (action #2 du plan AUDIT-001) | ✅ TRAITÉ 2026-10-25 (preuve : commits c428df1, e4ee7b1, 4019e41, 0222cd4, f637d9b, 43053a0 — commits conventionnels atomiques ; résidu mineur : 2 commits auto à message UUID 185d9d4/e108919 à consigner au prochain passage COMMIT) |
 | DEBT-015 | `page.tsx` : `'use client'` inutile (aucune interactivité → devrait être server component) + `<img>` au lieu de `next/image` | MINEUR | S | `src/app/page.tsx:1,19-27` | JS client inutile ; image non optimisée (pas de lazy/sizing automatiques) | Corriger lors de la 1re feature UI (page appelée à être remplacée) | ✅ TRAITÉ 2026-10-25 (page.tsx = server component, sans CSS inline) |
+| DEBT-016 | **Dépendances avec advisories connus** (`bun audit` : 94 advisories uniques — 5 CRITIQUE / 57 HIGH / 39 MODERATE / 6 LOW par occurrence) : `next@16.1.3` < 16.2.5 (4 RCE critiques **conditionnels** — Windows-hosted, Image Optimization API AVIF/SVG, `use cache` — aucun chemin actif dans l'app : 0 middleware/Server Actions/next/image, hôte Linux) + multiples HIGH (DoS, SSRF, bypass middleware) ; `next-auth@4.24.13` CRITIQUE (GHSA-7rqj-j65f-68wh) — **dépendance directe 0 fois importée** (`rg next-auth src/` → 0) ; `zod@4.3.5` < 4.6.6 HIGH (GHSA-mrhx-c7xc-m3w5) ; reste = chaîne build/dev (eslint, postcss, minimatch, lodash…) | MAJEUR | M | `package.json` ; sortie `bun audit` (2026-10-25) | RCE/DoS/SSRF si exposition production réelle ; bruit d'audit | `bun update next` (≥ 16.2.5) + `bun update zod` (≥ 4.6.6) + retrait `next-auth` → `bun audit` 0 critique/high runtime + re-jouer preuves (lint, tsc, tick×2, health) — **CONDITION PROD verdict AUDIT-002** | ✅ TRAITÉ 2026-10-25 : next@16.4.3, zod@4.6.7, next-auth retiré (bun remove) ; serveur redémarré + preuves rejouées (GET / 200, health ok, tick idempotent, lint 0) ; `bun audit` → **0 CRITIQUE** ; résiduel accepté et documenté : 2 HIGH transitifs non exploitables dans cet usage (DeepmergeTS via zod — deepmerge jamais alimenté par données utilisateur ; brace-expansion — tooling dev uniquement) |
+| DEBT-017 | 2 fichiers applicatifs > 500 lignes : `settings-screen.tsx` = **632**, `tasks-manager.tsx` = **531** (non vendus) + divergence défauts client/serveur : `quietHoursEnabled` fallback localStorage `false` (`use-voice-assistant.ts:57`) vs défaut Prisma `true` (`schema.prisma:57`) | MINEUR | M | `wc -l src/components/assistant/` ; `src/hooks/use-voice-assistant.ts:57` | Maintenabilité des 2 plus gros composants UI ; surprise UX sur fallback hors-ligne | Découpage en sous-composants à la prochaine évolution UI ; aligner le défaut client sur `true` | 🔄 EN COURS 2026-10-25 : défaut client `quietHoursEnabled: true` aligné (use-voice-assistant.ts, commenté DEBT-017) ; découpage des 2 composants reporté à la prochaine évolution UI |
+| DEBT-018 | Doc gouvernance obsolète : `ARCHITECTURE.md` §4 « état actuel — démo scaffold » + relation Post dite non déclarée (`:52-58`, réalité : déclarée `schema.prisma:30`, modèles Task/VoicePreferences/ReminderLog présents) + §6 table ADR vide (`:71`, réalité : ADR-001/002 existent) ; `API_CONTRACTS.md` labels périmés (GET /api listé « ✅ en production » `:24-31` alors que la route est supprimée ; v1 live — 7 endpoints prouvés curl — rangée sous « 📝 en cours de conception » `:35-37`) | MINEUR | S | `.ai/ARCHITECTURE.md`, `.ai/API_CONTRACTS.md` | Doc trompeuse pour un entrant ; contredit le registre dette (DEBT-001 TRAITÉ) | Mise à jour par DOC (plan AUDIT-002 #5, J+1) | 🟡 OUVERT (ajouté AUDIT-002, 2026-10-25) |
+| DEBT-019 | 3 commits auto à message UUID non conventionnels et non tracés dans `COMMIT_LOG.md` (185d9d4, e108919, 3b27e97 — auto-sauvegarde d'environnement ; ex. 3b27e97 = DEBT_REPORT.md 1 ligne) | MINEUR | S | `git log --oneline -10` ; `git show --stat 3b27e97` | Traçabilité conventionnelle incomplète (11/14 commits conventionnels) | Consigner au prochain passage COMMIT (catégorie « auto-sauvegarde environnement ») ; résidu déjà noté par DEBT-014 | 🟡 OUVERT (ajouté AUDIT-002, 2026-10-25) |
+| DEBT-020 | Données de test E2E persistées en base : `GET /api/tasks` → 7 tâches (3 seedées + artefacts E2E « Tâche silencieuse test », « Tâche silencieuse 2 », « Tâche snooze demo », etc.) | MINEUR | S | DB runtime (curl 2026-10-25) | Base « production » polluée d'artefacts de campagne | Purge avant toute mise en prod réelle : `bun run db:reset` + `scripts/seed.ts` (ou base vierge) | ✅ TRAITÉ 2026-10-25 : 4 tâches de test supprimées (title notIn seed), 3 tâches seed restantes, 0 log orphelin (cascade vérifiée) |
 
-## Plan de traitement recommandé
+## Plan de traitement recommandé (mis à jour AUDIT-002)
 
-1. **Immédiat (J+1, avant toute feature)** : DEBT-014 (commits) → DEBT-009 (README) — prérequis de traçabilité et d'onboarding.
-2. **1re feature (fenêtre J+7)** : DEBT-003, DEBT-004, DEBT-006, DEBT-005 (réactivation des garde-fous qualité) ; DEBT-013 (headers sécurité) ; DEBT-010 (runner de tests + 1er test) ; DEBT-001, DEBT-002 (schéma + `/api/health`).
-3. **1re feature UI** : DEBT-007, DEBT-011, DEBT-015, DEBT-008 (la page d'accueil et les metadata seront de toute façon retravaillées).
-4. **Sans échéance** : DEBT-012 (dette vendue assumée, à surveiller).
+1. **Avant toute exposition prod réelle** : DEBT-016 (upgrade next ≥ 16.2.5, zod ≥ 4.6.6, retrait next-auth + re-audit) → DEBT-013 (CSP finalisée et testée) → DEBT-020 (purge DB).
+2. **J+1** : DEBT-018 (ARCHITECTURE.md/API_CONTRACTS.md) → DEBT-019 (consignation auto-commits UUID).
+3. **Prochaine itération** : DEBT-003 vague 2 (exhaustive-deps, no-explicit-any) → DEBT-017 (découpage composants > 500, alignement défauts).
+4. **À la levée du verrou d'environnement** : DEBT-010 (Vitest sur computeTick/quiet-hours — fonctions pures, 0 mock — + 1er test `/api/health`).
+5. **Sans échéance** : DEBT-012 (dette vendue assumée, à surveiller).
 
 > Règle de suivi : tout item DEBT-XXX corrigé passe en `TRAITÉ` avec preuve (commit + vérification), et l'information est reportée dans le prochain audit global. Un item MAJEUR non traité après 2 features déclenche une alerte dans `AUDIT_REPORT.md`.
