@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { ExternalLink, Github, GitBranch, Loader2, LockKeyhole, RefreshCw, Search, ShieldCheck } from 'lucide-react'
+import { ExternalLink, Github, GitBranch, Loader2, LockKeyhole, Search, ShieldCheck } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
