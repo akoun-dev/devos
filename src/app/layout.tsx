@@ -26,7 +26,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fr" suppressHydrationWarning>
+      {/* suppressHydrationWarning sur <body> : certaines extensions navigateur (ex. Bitdefender —
+          attributs bis_skin_checked / bis_register) mutent le DOM avant l'hydratation React et
+          déclenchent un avertissement de mismatch sur les attributs du body. L'attribut neutralise
+          l'avertissement pour CET élément uniquement — aucun changement de comportement. */}
       <body
+        suppressHydrationWarning
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
       >
         {children}
