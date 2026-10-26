@@ -591,3 +591,20 @@ Stage Summary:
 - **Itérations v1.4 livrées** : historique IA persistant (backlog Task 33 soldé), automatisations réelles (1ᵉʳ menu avancé activé — recommandation §6 respectée), M3 soldé après 3 sessions récurrentes
 - TASKS : **23/23 — 100 %** · Dette inchangée 22 items (17 TRAITÉ) · Backlogs tracés : Git/GitHub/Terminal, sauvegardes, renommage conversations UI, autres conditions d'automatisation
 - **AUDIT-007 déclenché** (règle) → Task 38
+
+---
+Task ID: 37-bis
+Agent: ORCHESTRATEUR PRINCIPAL (CTO)
+Task: INC-002 — résolution de la divergence de dépôt (37 commits distants d'une session parallèle) et merge FEATURE-021 × v1.4
+
+Work Log:
+- Détection : push e9285c5 rejeté « behind 37 » — origin/main avait avancé (ed1cfc8→b1ba008) avec FEATURE-021 d'une session parallèle (spec .ai/SPECS/FEATURE-021.md : import GitHub par token, token JAMAIS persisté, tiroir mobile confirmé en AC-021-02)
+- Analyse AVANT action : 7 fichiers communs, 3 conflits (API_CONTRACTS, navigation, dev-os-app) — aucune donnée écrasée, aucun force-push
+- Merge résolu en combinant : API_CONTRACTS (v1.4 + section FEATURE-021), navigation (automations active conservée — la branche distante divergeait avant TASK-022), dev-os-app (GithubView ajouté + AutomationsView conservé, doublons retirés)
+- Vérifications : db:push OK (schéma combiné : 4 modèles v1.4 + Project.source*), health 200, tsc 0, lint 0 · coexistence prouvée (github ACTIVE, automatisations ACTIVE, evaluateAutomations intact, serializers des deux côtés)
+- Commit de fusion 5ebf39d poussé (origin/main = HEAD, tracking synchronisé) · INC-002 consigné dans INCIDENTS.md (format tableau) · COMMIT_LOG à mettre à jour par l'audit
+- Règle adoptée (leçon INC-002) : git fetch AVANT chaque push + annonce de périmètre de session dans le canal
+
+Stage Summary:
+- **Divergence résolue sans aucune perte** : FEATURE-021 (session parallèle) et v1.4 (cette session) coexistent et compilent
+- INC-002 tracé (cause racine : coordination inter-sessions absente)
