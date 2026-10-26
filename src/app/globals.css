@@ -3,6 +3,11 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/*
+ * DevOS visual system — palette selected from the approved redesign.
+ * Primary #3382F6 · secondary #6366F1 · success #10B981
+ * warning #F59E0B · error #EF4444 · background #07172A
+ */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -44,84 +49,99 @@
 }
 
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  color-scheme: dark;
+  --radius: 0.8rem;
+  --background: #07172a;
+  --foreground: #e2e8f0;
+  --card: #0b2038;
+  --card-foreground: #e2e8f0;
+  --popover: #0b2038;
+  --popover-foreground: #e2e8f0;
+  --primary: #3382f6;
+  --primary-foreground: #ffffff;
+  --secondary: #6366f1;
+  --secondary-foreground: #ffffff;
+  --muted: #122b48;
+  --muted-foreground: #9fb2c9;
+  --accent: #153454;
+  --accent-foreground: #eaf2ff;
+  --destructive: #ef4444;
+  --border: #1e3a5b;
+  --input: #142d49;
+  --ring: #3382f6;
+  --chart-1: #3382f6;
+  --chart-2: #10b981;
+  --chart-3: #6366f1;
+  --chart-4: #f59e0b;
+  --chart-5: #ef4444;
+  --sidebar: #061326;
+  --sidebar-foreground: #dbe7f5;
+  --sidebar-primary: #3382f6;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #102c4d;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #142b46;
+  --sidebar-ring: #3382f6;
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  color-scheme: dark;
+  --background: #07172a;
+  --foreground: #e2e8f0;
+  --card: #0b2038;
+  --card-foreground: #e2e8f0;
+  --popover: #0b2038;
+  --popover-foreground: #e2e8f0;
+  --primary: #3382f6;
+  --primary-foreground: #ffffff;
+  --secondary: #6366f1;
+  --secondary-foreground: #ffffff;
+  --muted: #122b48;
+  --muted-foreground: #9fb2c9;
+  --accent: #153454;
+  --accent-foreground: #eaf2ff;
+  --destructive: #ef4444;
+  --border: #1e3a5b;
+  --input: #142d49;
+  --ring: #3382f6;
+  --sidebar: #061326;
+  --sidebar-foreground: #dbe7f5;
+  --sidebar-primary: #3382f6;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #102c4d;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #142b46;
+  --sidebar-ring: #3382f6;
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    min-height: 100%;
+    background: var(--background);
+  }
   body {
     @apply bg-background text-foreground;
+    background-image: radial-gradient(ellipse at 48% -18%, rgb(51 130 246 / 12%), transparent 55%);
+    min-height: 100dvh;
+  }
+  ::selection {
+    color: #fff;
+    background: rgb(51 130 246 / 55%);
+  }
+  button, input, textarea, select {
+    transition-property: color, background-color, border-color, box-shadow, opacity;
+    transition-duration: 160ms;
+  }
+  :focus-visible {
+    outline: 2px solid #3382f6;
+    outline-offset: 2px;
   }
 }
 
-/* DevOS — scrollbar discrète pour les listes défilantes (journal, tâches) */
+/* App shell: deep navy canvas, subtle dividers and persistent navigation. */
 .devos-scroll {
   scrollbar-width: thin;
   scrollbar-color: var(--border) transparent;
@@ -139,4 +159,39 @@
 }
 .devos-scroll::-webkit-scrollbar-thumb:hover {
   background-color: var(--muted-foreground);
+}
+
+/* Reusable premium surface treatment for cards, dialogs and navigation. */
+[data-slot="card"] {
+  border-color: var(--border);
+  background-image: linear-gradient(145deg, rgb(17 43 72 / 42%), transparent 72%);
+  box-shadow: 0 8px 26px rgb(0 0 0 / 12%);
+}
+[data-slot="card"]:hover {
+  border-color: #294d74;
+}
+[data-slot="input"], [data-slot="textarea"], [data-slot="select-trigger"] {
+  border-color: #244361;
+  background-color: #0a1c31;
+}
+[data-slot="input"]:focus-visible, [data-slot="textarea"]:focus-visible,
+[data-slot="select-trigger"]:focus-visible {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgb(51 130 246 / 15%);
+}
+[data-slot="tabs-list"] {
+  border: 1px solid var(--border);
+  background: #091a2e;
+}
+[data-slot="tabs-trigger"][data-state="active"] {
+  color: #fff;
+  background: var(--primary);
+  box-shadow: 0 3px 12px rgb(51 130 246 / 22%);
+}
+[data-slot="dialog-content"], [data-slot="sheet-content"] {
+  border-color: var(--border);
+  background-color: #091b30;
+}
+a {
+  text-underline-offset: 3px;
 }

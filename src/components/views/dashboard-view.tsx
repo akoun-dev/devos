@@ -81,10 +81,10 @@ export function DashboardView({
   return (
     <div className="flex flex-col gap-4">
       {/* Résumé du jour */}
-      <Card className="border-emerald-200 bg-gradient-to-br from-emerald-50/60 to-transparent dark:border-emerald-900 dark:from-emerald-950/40">
+      <Card className="border-blue-500/30 bg-gradient-to-br from-blue-500/10 via-indigo-500/5 to-transparent">
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-base">
-            <Sparkles className="size-4 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
+            <Sparkles className="size-4 text-primary" aria-hidden="true" />
             Résumé du jour
           </CardTitle>
           <CardDescription>{summary}</CardDescription>

@@ -1,7 +1,6 @@
 /**
- * serialize.ts — sérialisation stricte conforme au contrat API v1
- * (.ai/API_CONTRACTS.md) : dates → ISO 8601, EXACTEMENT les champs du contrat,
- * aucun champ en trop.
+ * serialize.ts — sérialisation stricte conforme aux contrats API :
+ * dates → ISO 8601 et aucun champ interne inattendu.
  */
 
 import type {
@@ -18,90 +17,56 @@ import type {
 
 export function serializeTask(task: Task & { project?: { name: string } | null }) {
   return {
-    id: task.id,
-    title: task.title,
-    description: task.description,
-    category: task.category,
-    priority: task.priority,
-    status: task.status,
-    dueAt: task.dueAt ? task.dueAt.toISOString() : null,
-    reminderOffsetMinutes: task.reminderOffsetMinutes,
-    reminderEnabled: task.reminderEnabled,
-    projectId: task.projectId,
-    projectName: task.project?.name ?? null,
-    createdAt: task.createdAt.toISOString(),
-    updatedAt: task.updatedAt.toISOString(),
+    id: task.id, title: task.title, description: task.description, category: task.category,
+    priority: task.priority, status: task.status, dueAt: task.dueAt ? task.dueAt.toISOString() : null,
+    reminderOffsetMinutes: task.reminderOffsetMinutes, reminderEnabled: task.reminderEnabled,
+    projectId: task.projectId, projectName: task.project?.name ?? null,
+    createdAt: task.createdAt.toISOString(), updatedAt: task.updatedAt.toISOString(),
   };
 }
 
 export function serializeProject(project: Project & { _count?: { tasks: number } }, doneTaskCount = 0) {
   return {
-    id: project.id,
-    name: project.name,
-    description: project.description,
-    status: project.status,
-    priority: project.priority,
-    favorite: project.favorite,
-    color: project.color,
+    id: project.id, name: project.name, description: project.description, status: project.status,
+    priority: project.priority, favorite: project.favorite, color: project.color,
     dueAt: project.dueAt ? project.dueAt.toISOString() : null,
-    taskCount: project._count?.tasks ?? 0,
-    doneTaskCount,
-    createdAt: project.createdAt.toISOString(),
-    updatedAt: project.updatedAt.toISOString(),
+    sourceProvider: project.sourceProvider ?? null,
+    sourceRepositoryId: project.sourceRepositoryId ?? null,
+    sourceRepositoryUrl: project.sourceRepositoryUrl ?? null,
+    sourceDefaultBranch: project.sourceDefaultBranch ?? null,
+    taskCount: project._count?.tasks ?? 0, doneTaskCount,
+    createdAt: project.createdAt.toISOString(), updatedAt: project.updatedAt.toISOString(),
   };
 }
 
 export function serializeNote(note: Note & { project?: { name: string } | null }) {
   return {
-    id: note.id,
-    title: note.title,
-    content: note.content,
-    favorite: note.favorite,
-    trashed: note.trashed,
-    projectId: note.projectId,
-    projectName: note.project?.name ?? null,
-    createdAt: note.createdAt.toISOString(),
-    updatedAt: note.updatedAt.toISOString(),
+    id: note.id, title: note.title, content: note.content, favorite: note.favorite,
+    trashed: note.trashed, projectId: note.projectId, projectName: note.project?.name ?? null,
+    createdAt: note.createdAt.toISOString(), updatedAt: note.updatedAt.toISOString(),
   };
 }
 
 export function serializePreferences(prefs: VoicePreferences) {
   return {
-    enabled: prefs.enabled,
-    reminderOffsetMinutes: prefs.reminderOffsetMinutes,
-    announceNewTasks: prefs.announceNewTasks,
-    announceDeadlines: prefs.announceDeadlines,
-    announcePriorities: prefs.announcePriorities,
-    quietHoursEnabled: prefs.quietHoursEnabled,
-    quietStart: prefs.quietStart,
-    quietEnd: prefs.quietEnd,
-    quietDays: prefs.quietDays,
-    style: prefs.style,
-    language: prefs.language,
-    voice: prefs.voice,
-    volume: prefs.volume,
-    allowedCategories: prefs.allowedCategories,
-    privacyMode: prefs.privacyMode,
-    urgentOverrideQuiet: prefs.urgentOverrideQuiet,
-    suspended: prefs.suspended,
+    enabled: prefs.enabled, reminderOffsetMinutes: prefs.reminderOffsetMinutes,
+    announceNewTasks: prefs.announceNewTasks, announceDeadlines: prefs.announceDeadlines,
+    announcePriorities: prefs.announcePriorities, quietHoursEnabled: prefs.quietHoursEnabled,
+    quietStart: prefs.quietStart, quietEnd: prefs.quietEnd, quietDays: prefs.quietDays,
+    style: prefs.style, language: prefs.language, voice: prefs.voice, volume: prefs.volume,
+    allowedCategories: prefs.allowedCategories, privacyMode: prefs.privacyMode,
+    urgentOverrideQuiet: prefs.urgentOverrideQuiet, suspended: prefs.suspended,
     suspendedUntil: prefs.suspendedUntil ? prefs.suspendedUntil.toISOString() : null,
     updatedAt: prefs.updatedAt.toISOString(),
   };
 }
 
-/** Log sérialisé pour l'endpoint snooze / debug éventuel. */
 export function serializeLog(log: ReminderLog) {
   return {
-    id: log.id,
-    taskId: log.taskId,
-    type: log.type,
-    scheduledFor: log.scheduledFor.toISOString(),
-    status: log.status,
-    firedAt: log.firedAt ? log.firedAt.toISOString() : null,
+    id: log.id, taskId: log.taskId, type: log.type, scheduledFor: log.scheduledFor.toISOString(),
+    status: log.status, firedAt: log.firedAt ? log.firedAt.toISOString() : null,
     snoozedUntil: log.snoozedUntil ? log.snoozedUntil.toISOString() : null,
-    message: log.message,
-    messageSource: log.messageSource,
-    createdAt: log.createdAt.toISOString(),
+    message: log.message, messageSource: log.messageSource, createdAt: log.createdAt.toISOString(),
   };
 }
 

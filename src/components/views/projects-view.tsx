@@ -7,7 +7,7 @@
  */
 
 import { useMemo, useState } from 'react'
-import { Archive, FolderKanban, Loader2, PlusCircle, Star, Trash2 } from 'lucide-react'
+import { Archive, ExternalLink, FolderKanban, Github, Loader2, PlusCircle, Search, Star, Trash2 } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -55,7 +55,7 @@ const STATUS_LABELS: Record<ProjectStatus, string> = {
   archive: 'Archivé',
 }
 
-type ListFilter = 'tous' | 'favoris' | 'archives'
+type ListFilter = 'tous' | 'favoris' | 'pause' | 'termines' | 'archives'
 
 export function ProjectsView({
   projects,
@@ -68,6 +68,7 @@ export function ProjectsView({
 }: ProjectsViewProps) {
   const { toast } = useToast()
   const [filter, setFilter] = useState<ListFilter>('tous')
+  const [search, setSearch] = useState('')
   const [formOpen, setFormOpen] = useState(false)
   const [form, setForm] = useState({ name: '', description: '', priority: 'normale' as TaskPriority, dueAt: '' })
   const [submitting, setSubmitting] = useState(false)
@@ -76,10 +77,20 @@ export function ProjectsView({
   const [busy, setBusy] = useState(false)
 
   const visible = useMemo(() => {
-    if (filter === 'favoris') return projects.filter((project) => project.favorite && project.status !== 'archive')
-    if (filter === 'archives') return projects.filter((project) => project.status === 'archive')
-    return projects.filter((project) => project.status !== 'archive')
-  }, [projects, filter])
+    const normalized = search.trim().toLocaleLowerCase('fr')
+    return projects.filter((project) => {
+      const matchesFilter =
+        filter === 'favoris' ? project.favorite && project.status !== 'archive' :
+        filter === 'pause' ? project.status === 'en_pause' :
+        filter === 'termines' ? project.status === 'termine' :
+        filter === 'archives' ? project.status === 'archive' :
+        project.status !== 'archive'
+      const matchesSearch = !normalized ||
+        project.name.toLocaleLowerCase('fr').includes(normalized) ||
+        (project.description ?? '').toLocaleLowerCase('fr').includes(normalized)
+      return matchesFilter && matchesSearch
+    })
+  }, [projects, filter, search])
 
   const detail = detailId ? projects.find((project) => project.id === detailId) ?? null : null
   const detailTasks = detail ? tasks.filter((task) => task.projectId === detail.id) : []
@@ -157,17 +168,23 @@ export function ProjectsView({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <Select value={filter} onValueChange={(value) => setFilter(value as ListFilter)}>
-          <SelectTrigger className="w-full sm:w-52" aria-label="Filtrer les projets">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="tous">Tous les projets</SelectItem>
-            <SelectItem value="favoris">Favoris</SelectItem>
-            <SelectItem value="archives">Archivés</SelectItem>
-          </SelectContent>
-        </Select>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="grid flex-1 gap-2 sm:grid-cols-[minmax(12rem,1fr)_12rem]">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+            <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Rechercher un projet…" className="h-11 pl-9" aria-label="Rechercher un projet" />
+          </div>
+          <Select value={filter} onValueChange={(value) => setFilter(value as ListFilter)}>
+            <SelectTrigger className="h-11 w-full" aria-label="Filtrer les projets"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="tous">Tous les projets</SelectItem>
+              <SelectItem value="favoris">Favoris</SelectItem>
+              <SelectItem value="pause">En pause</SelectItem>
+              <SelectItem value="termines">Terminés</SelectItem>
+              <SelectItem value="archives">Archivés</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
         <Button onClick={() => setFormOpen(true)} className="min-h-11 sm:min-h-9">
           <PlusCircle aria-hidden="true" />
           Nouveau projet
@@ -183,7 +200,7 @@ export function ProjectsView({
       ) : visible.length === 0 ? (
         <Card>
           <CardContent className="p-6 text-center text-sm text-muted-foreground">
-            {filter === 'tous'
+            {filter === 'tous' && !search.trim()
               ? 'Aucun projet pour le moment — créez votre premier projet pour organiser vos tâches.'
               : 'Aucun projet dans cette vue.'}
           </CardContent>
@@ -229,6 +246,14 @@ export function ProjectsView({
                   </Badge>
                   {project.dueAt ? <span className="text-xs text-muted-foreground">{formatDateTimeFR(project.dueAt)}</span> : null}
                 </div>
+
+                {project.sourceRepositoryUrl ? (
+                  <a href={project.sourceRepositoryUrl} target="_blank" rel="noreferrer" className="mt-3 inline-flex min-h-11 max-w-full items-center gap-2 rounded-md border px-3 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
+                    <Github className="size-3.5 shrink-0" aria-hidden="true" />
+                    <span className="truncate">Dépôt GitHub associé</span>
+                    <ExternalLink className="size-3 shrink-0" aria-hidden="true" />
+                  </a>
+                ) : null}
 
                 <div className="mt-3">
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
@@ -355,6 +380,17 @@ export function ProjectsView({
                     <p className="text-xs text-muted-foreground">Restantes</p>
                   </div>
                 </div>
+                {detail.sourceRepositoryUrl ? (
+                  <div className="rounded-lg border p-3">
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Dépôt lié</p>
+                    <a href={detail.sourceRepositoryUrl} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center gap-2 break-all text-sm text-primary underline-offset-4 hover:underline">
+                      <Github className="size-4 shrink-0" aria-hidden="true" />
+                      {detail.sourceRepositoryUrl}
+                      <ExternalLink className="size-3.5 shrink-0" aria-hidden="true" />
+                    </a>
+                    {detail.sourceDefaultBranch ? <p className="mt-1 text-xs text-muted-foreground">Branche par défaut : {detail.sourceDefaultBranch}</p> : null}
+                  </div>
+                ) : null}
                 <div>
                   <p className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                     Tâches liées

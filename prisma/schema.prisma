@@ -37,7 +37,7 @@ model Post {
   author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
 }
 
-// ─── FEATURE-001 « Assistant vocal proactif » (contrat API v1 — .ai/API_CONTRACTS.md) ───
+// ─── FEATURE-001 « Assistant vocal proactif » ───
 
 model Task {
   id                    String        @id @default(cuid())
@@ -61,25 +61,30 @@ model Task {
   @@index([projectId])
 }
 
-// ─── FEATURE-UI-SHELL « Espace de travail » (contrat API v1.3 — .ai/API_CONTRACTS.md) ───
+// ─── FEATURE-UI-SHELL « Espace de travail » ───
 
 model Project {
-  id          String   @id @default(cuid())
-  name        String
-  description String?
-  status      String   @default("actif")
-  priority    String   @default("normale")
-  favorite    Boolean  @default(false)
-  color       String?
-  dueAt       DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tasks       Task[]
-  notes       Note[]
+  id                    String   @id @default(cuid())
+  name                  String
+  description           String?
+  status                String   @default("actif")
+  priority              String   @default("normale")
+  favorite              Boolean  @default(false)
+  color                 String?
+  dueAt                 DateTime?
+  sourceProvider        String?
+  sourceRepositoryId    String?
+  sourceRepositoryUrl   String?
+  sourceDefaultBranch   String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  userId                String
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tasks                 Task[]
+  notes                 Note[]
 
   @@index([userId])
+  @@unique([userId, sourceRepositoryId])
 }
 
 model Note {

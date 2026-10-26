@@ -375,3 +375,16 @@ Erreurs: 401 | 404 | 409 (run < 1 s) | 500: { error }
 - 2026-10-26 : v1.2 (AUDIT-004 M3) — 429 + Retry-After documentés sur register/login.
 - 2026-10-26 : v1.3 FEATURE-UI-SHELL (Task 33) — 6 nouveaux endpoints (projects, notes, activity, ai/chat) + projectId sur tasks ; types Project/Note/ActivityEntry/AiChatResponse (ADR-004).
 - 2026-10-26 : v1.4 « Historique IA persistant + Automatisations » (Task 37) — 5 endpoints conversations + 4 endpoints automations (dont run manuel) + chat persistant (conversationId) + tick étendu aux automatisations (type "automation") ; vues ui-shell : historique IA + vue Automatisations ACTIVE (registre planned→active).
+
+
+## FEATURE-021 — Dépôts GitHub via token temporaire
+
+### POST /api/github/repositories
+Description: lister les dépôts accessibles par le token GitHub fourni ou importer un dépôt explicitement sélectionné
+Auth: session DevOS
+Request (action=list): { action: "list"; token: string; query?: string; visibility?: "all"|"public"|"private" }
+Request (action=import): { action: "import"; token: string; repositoryId: number; name: string; fullName: string; htmlUrl: string; description?: string|null; defaultBranch?: string|null; isPrivate: boolean }
+Response 200 (list): { repositories: { id; name; fullName; htmlUrl; description; isPrivate; defaultBranch; owner; updatedAt }[] }
+Response 201 (import): { project: { id; name; sourceRepositoryUrl; sourceDefaultBranch } }
+Erreurs: 400 (DTO invalide) | 401 (session absente ou token GitHub invalide) | 403 (dépôt non accessible) | 409 (dépôt déjà importé) | 429 (limitation GitHub) | 502 (GitHub indisponible)
+Sécurité: Cache-Control no-store; aucun token persisté ou journalisé; appel serveur uniquement vers api.github.com; projet associé au userId de session. Le token est transmis dans le corps POST et n'est jamais renvoyé.

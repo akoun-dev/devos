@@ -1,0 +1,57 @@
+name: DevOS validation
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      DATABASE_URL: file:./ci.db
+      JWT_SECRET: ci-only-secret-that-is-at-least-32-characters
+      NODE_ENV: test
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+      - name: Validate Prisma schema
+        run: bunx prisma validate
+      - name: Generate Prisma client
+        run: bun run db:generate
+      - name: Synchronize isolated CI SQLite database
+        run: bunx prisma db push --skip-generate
+      - name: GitHub repository API tests
+        run: bun test tests/github-repositories.test.ts
+      - name: Install Playwright for browser smoke tests
+        run: bun add --dev @playwright/test
+      - name: Install Chromium
+        run: bunx playwright install --with-deps chromium
+      - name: Start DevOS with isolated CI database
+        run: |
+          bun run dev > /tmp/devos-dev.log 2>&1 &
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent http://127.0.0.1:3000/ > /dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          cat /tmp/devos-dev.log
+          exit 1
+      - name: Desktop and mobile GitHub import smoke tests
+        run: bunx playwright test tests/github-view.e2e.spec.mjs --reporter=line
+      - name: ESLint
+        run: bun run lint
+      - name: TypeScript
+        run: bunx tsc --noEmit

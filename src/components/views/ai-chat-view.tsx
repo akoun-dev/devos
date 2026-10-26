@@ -178,7 +178,7 @@ export function AiChatView({ onUnauthorized }: AiChatViewProps) {
         <CardHeader className="pb-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <CardTitle className="flex items-center gap-2 text-base">
-              <Bot className="size-4 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
+              <Bot className="size-4 text-primary" aria-hidden="true" />
               Assistant IA
               <Badge variant="secondary" className="text-[10px]">
                 Historique enregistré
