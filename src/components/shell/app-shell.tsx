@@ -75,9 +75,9 @@ export function AppShell({
   }, [user.name, user.email])
 
   return (
-    <div className="flex min-h-dvh bg-background text-foreground">
+    <div className="devos-shell flex min-h-dvh bg-background text-foreground">
       {/* Sidebar desktop (lg+) — générée depuis le registre */}
-      <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col gap-4 overflow-y-auto border-r bg-card px-3 py-4 lg:flex">
+      <aside className="devos-sidebar sticky top-0 hidden h-dvh w-64 shrink-0 flex-col gap-4 overflow-y-auto border-r bg-card px-3 py-4 lg:flex">
         <div className="flex items-center gap-2.5 px-2">
           <span
             className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground"
@@ -96,7 +96,7 @@ export function AppShell({
 
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Header */}
-        <header className="sticky top-0 z-40 border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
+        <header className="devos-header sticky top-0 z-40 border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
           <div className="flex items-center justify-between gap-3 px-4 py-3 sm:px-6">
             <div className="flex min-w-0 items-center gap-2">
               {/* Tiroir mobile */}
@@ -186,7 +186,7 @@ export function AppShell({
         </main>
 
         {/* Footer sticky (règle UI : mt-auto sur un wrapper flex-col) */}
-        <footer className="mt-auto border-t bg-card/80 pb-[env(safe-area-inset-bottom)]">
+        <footer className="devos-footer mt-auto border-t bg-card/80 pb-[env(safe-area-inset-bottom)]">
           <div className="flex w-full flex-wrap items-center justify-between gap-x-4 gap-y-1 px-4 py-3 text-xs text-muted-foreground sm:px-6 sm:text-sm">
             <span>© {new Date().getFullYear()} DevOS</span>
             <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
