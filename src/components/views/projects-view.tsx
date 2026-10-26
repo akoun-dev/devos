@@ -200,7 +200,7 @@ export function ProjectsView({
       ) : visible.length === 0 ? (
         <Card>
           <CardContent className="p-6 text-center text-sm text-muted-foreground">
-            {filter === 'tous'
+            {filter === 'tous' && !search.trim()
               ? 'Aucun projet pour le moment — créez votre premier projet pour organiser vos tâches.'
               : 'Aucun projet dans cette vue.'}
           </CardContent>
