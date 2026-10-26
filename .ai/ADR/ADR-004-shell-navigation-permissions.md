@@ -8,11 +8,12 @@
 ## Décision
 
 1. **Page unique `/` + routeur d'état** : la navigation reste un état client (`viewId`) — aucune route supplémentaire, conforme à la contrainte d'architecture de la plateforme (une seule page visible) et à la posture 0 middleware (ADR-003).
-2. **Registre de navigation centralisé** (`src/lib/navigation.ts`) : chaque destination y est déclarée UNE fois (id, libellé, section, icône, rôle minimal, statut `active | planned`, description). La sidebar, le tiroir mobile et la barre inférieure mobile sont **générés depuis ce registre** — aucun menu dupliqué en dur.
+2. **Registre de navigation centralisé** (`src/lib/navigation.ts`) : chaque destination y est déclarée UNE fois (id, libellé, section, icône, rôle minimal, statut `active | planned`, description). La sidebar (desktop) et le tiroir mobile (Sheet) sont **générés depuis ce registre** — aucun menu dupliqué en dur (l'ancienne barre inférieure mobile a été retirée, cf. amendement §4).
 3. **Permissions centralisées** (`src/lib/permissions.ts`) : matrice rôles×vues (ROLES_PERMISSIONS.md), fonction `canAccessView(viewId, role)` consultée par le registre ; v1 = tous les comptes authentifiés sont `proprietaire`. La sécurité réelle reste côté backend (scopage userId obligatoire sur chaque endpoint — jamais basée sur le masquage de menus).
 4. **Navigation adaptative** :
    - Desktop (lg+) : **sidebar fixe** visible avec libellés complets et sections ;
-   - Mobile : **tiroir de navigation** (Sheet) + **barre inférieure à 5 destinations** (Accueil, Projets, Tâches, Assistant, Plus) ; « Plus » ouvre le tiroir complet ; bouton micro accessible depuis l'en-tête.
+   - Mobile : **tiroir de navigation** (Sheet) seul ; bouton micro accessible depuis l'en-tête.
+   - **Amendement 2026-10-26 (décision CTO, TASK-020)** : la **barre inférieure mobile à 5 destinations est supprimée** — le CTO exige une navigation mobile réduite au **tiroir uniquement** (« retire le menu compacte, garde juste la sidebar (drawer) »). Les vues passent en **pleine largeur (w-full)** sur web (suppression du conteneur `max-w-5xl`). Le champ `mobilePrimary` et l'export `MOBILE_PRIMARY_ITEMS` du registre sont retirés (registre à source unique conservé : sidebar + tiroir générés depuis `NAV_SECTIONS`).
 5. **Menus avancés progressifs** : les destinations non implémentées (Git, GitHub, Terminal, Automatisations, Stockage & Sauvegardes) sont affichées avec statut `planned` → désactivées + badge « Bientôt » et vue explicative (`coming-soon-view`) — **jamais de lien mort, jamais de menu caché discrètement**.
 6. **Réutilisation de l'existant** : l'assistant vocal (FEATURE-001 : hook `useVoiceAssistant`, AssistantPanel, SettingsScreen) reste le moteur ; les nouvelles vues le consomment via props/state partagé. `TasksManager` est remplacé par des composants découpés (task-form-dialog, task-card, tasks-badges) qui alimentent les « smart views » du cahier des charges (Ma journée, En retard, Prioritaires…).
 

@@ -523,3 +523,27 @@ Stage Summary:
 - **Score global AUDIT-005 : 80,4/100 (+0,2 vs AUDIT-004)** : archi 92, qualité 85, tests 32, doc 74, sécurité 88, a11y 88, perf 92, conformité 90 (+3 — contrat v1.3 vérifié champ à champ), dette 78 (récurrences), santé 85
 - **Constats : 0 CRITIQUE · 0 MAJEUR · 8 MINEUR** (M1 COMMIT_LOG −4 — consigné ; M2 « 16 destinations » vs 16 ; M3 atomicité 9f3bea2 ; M4 sniffing 401 ; M5 ref factice ; M6 badge statique ; M7 pas de tracking upstream ; M8 drifts doc hérités)
 - **Verdict : ✅ AUTORISÉ** — FEATURE-UI-SHELL conforme cahier des charges + ADR-004, acquis re-prouvés en exécution, base propre ; conditions permanentes inchangées (DEBT-020 purge + verrou :3000 + CSP nonce avant toute exposition prod réelle) ; dette recomptée inchangée 22 items (17 T / 2 EC / 1 R / 1 A / 1 O) ; AUDIT-006 après la prochaine feature ou avant exposition prod réelle
+
+---
+Task ID: 35
+Agent: ORCHESTRATEUR PRINCIPAL (CTO) — Exécution directe
+Task: Exigence CTO « Mets les vues en w-full pour web, en mobile, retire le menu compacte, garde juste la sidebar (drawer) » — TASK-020 (amendement ADR-004 §4)
+
+Work Log:
+- Lecture AVANT travail : worklog (Tasks 29→34 intactes, AUDIT-005 ✅ 80,4), app-shell.tsx, bottom-nav.tsx, side-nav.tsx, navigation.ts, ADR-004, TASKS.md, état git (HEAD = 99c556f, arbre propre)
+- Décision tracée AVANT le code : amendement ADR-004 §4 (barre inférieure supprimée — navigation mobile = tiroir seul ; vues pleine largeur ; champ mobilePrimary + export MOBILE_PRIMARY_ITEMS retirés du registre) + cohérence §2
+- Code : app-shell.tsx — main `mx-auto max-w-5xl pb-24` → `w-full pb-8` (w-full web, clearance bottom-nav retirée) ; footer aligné w-full + `pb-[env(safe-area-inset-bottom)]` simple ; import/JSX BottomNav supprimés · bottom-nav.tsx supprimé (−76 l.) · navigation.ts — mobilePrimary (4 occurrences) + MOBILE_PRIMARY_ITEMS retirés, commentaire registre à jour (sidebar + tiroir = générés depuis NAV_SECTIONS, source unique conservée)
+- Gates : bun run lint exit 0 · bunx tsc --noEmit exit 0
+- E2E agent-browser (session authentifiée akoun@devos.test persistante) — preuves mesurées :
+  - Desktop 1280 : sidebarW=256, mainW=1024 (= 1280−256), mainMaxW=none, marges 0 → **w-full prouvé** (capture task20-desktop-wfull.png)
+  - Desktop 1920 : mainW=1664, footerW=1664, footerMaxW=none (capture task20-desktop-1920-wfull.png)
+  - Mobile 375 : bottomNavPresent=false (barre compacte retirée), burger présent+visible, mainW=375, hasHScroll=false
+  - Tiroir : ouverture → navigation complète (11 actives + 5 « Bientôt ») → clic Projets → h1 « Projets », tiroir fermé auto (captures task20-mobile-drawer.png, task20-mobile-projets.png)
+  - 0 erreur console (2 warnings Radix DialogContent préexistants, hors périmètre)
+- Gouvernance : TASKS.xlsx TASK-020 (ligne 24, TOTAL 25 = 20 tâches, STATISTIQUES 5:24 — recalc success 0 err · validate passed 0 issue) · TASKS.md miroir 20/20 + score AUDIT-005 80,4 reporté · ADR-004 amendé
+- Aucun changement de contrat API (aucun endpoint touché) · base inchangée · purge artefact de lecture (read_*.txt)
+
+Stage Summary:
+- **Vues w-full web livrées** (fini la colonne max-w-5xl — exploitables de 1024 à 1664 px mesurés) et **navigation mobile unifiée sur le tiroir** (barre compacte supprimée, une seule source de vérité visuelle)
+- Registre navigation.ts assaini (champ + export orphelins retirés), dette code −76 l.
+- TASKS : **20/20 — 100 %** · AUDIT-006 déclenché (règle) → Task 36

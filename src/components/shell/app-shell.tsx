@@ -3,8 +3,9 @@
 /**
  * AppShell — enveloppe layout du shell DevOS (FEATURE-UI-SHELL, ADR-004).
  *
- * - Desktop (lg+) : sidebar fixe (registre central) ;
- * - Mobile : header (menu → tiroir Sheet) + barre inférieure 5 destinations ;
+ * - Desktop (lg+) : sidebar fixe (registre central), contenu en PLEINE LARGEUR (w-full) ;
+ * - Mobile : header (menu → tiroir Sheet) = SEULE navigation (barre inférieure
+ *   retirée — décision CTO TASK-020 / amendement ADR-004 §4) ;
  * - Header : titre de la vue, badge assistant, horloge, identité + déconnexion ;
  * - Footer sticky conservé (synchro, heures silencieuses).
  */
@@ -15,9 +16,8 @@ import { LogOut, Menu, Volume2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
-import { BottomNav } from '@/components/shell/bottom-nav'
 import { PlannedNav, SideNav } from '@/components/shell/side-nav'
-import { MOBILE_PRIMARY_ITEMS, findNavItem } from '@/lib/navigation'
+import { findNavItem } from '@/lib/navigation'
 import { cn } from '@/lib/utils'
 import type { AuthUser } from '@/types/assistant'
 import type { Role, ViewId } from '@/types/workspace'
@@ -178,14 +178,16 @@ export function AppShell({
           </div>
         </header>
 
-        {/* Contenu */}
-        <main className="mx-auto w-full max-w-5xl flex-1 px-4 pb-24 pt-4 sm:px-6 sm:pt-6 lg:pb-8">
+        {/* Contenu — pleine largeur (w-full, décision CTO TASK-020 ; l'ancien
+            conteneur mx-auto max-w-5xl et la clearance pb-24 de la barre
+            inférieure mobile sont retirés) */}
+        <main className="w-full flex-1 px-4 pb-8 pt-4 sm:px-6 sm:pt-6">
           {children}
         </main>
 
         {/* Footer sticky (règle UI : mt-auto sur un wrapper flex-col) */}
-        <footer className="mt-auto border-t bg-card/80 pb-[calc(env(safe-area-inset-bottom)+4.5rem)] lg:pb-[env(safe-area-inset-bottom)]">
-          <div className="mx-auto flex w-full max-w-5xl flex-wrap items-center justify-between gap-x-4 gap-y-1 px-4 py-3 text-xs text-muted-foreground sm:px-6 sm:text-sm">
+        <footer className="mt-auto border-t bg-card/80 pb-[env(safe-area-inset-bottom)]">
+          <div className="flex w-full flex-wrap items-center justify-between gap-x-4 gap-y-1 px-4 py-3 text-xs text-muted-foreground sm:px-6 sm:text-sm">
             <span>© {new Date().getFullYear()} DevOS</span>
             <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
               <span>Serveur : {serverOk ? 'connecté' : 'erreur de synchronisation'}</span>
@@ -201,13 +203,6 @@ export function AppShell({
           </div>
         </footer>
 
-        {/* Barre inférieure mobile — 5 destinations (cahier des charges §5) */}
-        <BottomNav
-          items={MOBILE_PRIMARY_ITEMS}
-          currentView={currentView}
-          onNavigate={navigate}
-          onMore={() => setDrawerOpen(true)}
-        />
       </div>
     </div>
   )

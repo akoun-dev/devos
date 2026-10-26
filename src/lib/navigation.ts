@@ -1,8 +1,9 @@
 /**
  * navigation.ts — registre central de navigation du shell DevOS (ADR-004).
  *
- * Chaque destination est déclarée UNE fois ici ; la sidebar desktop, le tiroir
- * mobile et la barre inférieure mobile sont générés depuis ce registre.
+ * Chaque destination est déclarée UNE fois ici ; la sidebar desktop et le
+ * tiroir mobile (Sheet) sont générés depuis ce registre. (L'ancienne barre
+ * inférieure mobile a été retirée — décision CTO TASK-020, amendement ADR-004 §4.)
  * Statut `planned` = destination affichée, désactivée, badge « Bientôt »
  * (jamais de lien mort, jamais de menu caché discrètement — ADR-004 §5).
  */
@@ -38,8 +39,6 @@ export interface NavItem {
   description: string
   icon: LucideIcon
   status: NavStatus
-  /** Destination de la barre inférieure mobile (5 max — cahier des charges §5). */
-  mobilePrimary?: boolean
 }
 
 export interface NavSection {
@@ -59,7 +58,6 @@ export const NAV_SECTIONS: NavSection[] = [
         description: 'Vue générale, priorités, activité récente',
         icon: LayoutDashboard,
         status: 'active',
-        mobilePrimary: true,
       },
       {
         id: 'projects',
@@ -67,7 +65,6 @@ export const NAV_SECTIONS: NavSection[] = [
         description: 'Créer, suivre, archiver vos projets',
         icon: FolderKanban,
         status: 'active',
-        mobilePrimary: true,
       },
       {
         id: 'tasks',
@@ -75,7 +72,6 @@ export const NAV_SECTIONS: NavSection[] = [
         description: 'Ma journée, en retard, prioritaires…',
         icon: ListChecks,
         status: 'active',
-        mobilePrimary: true,
       },
       {
         id: 'planning',
@@ -110,7 +106,6 @@ export const NAV_SECTIONS: NavSection[] = [
         description: 'Mode JARVIS : annonces et rappels parlés',
         icon: Mic,
         status: 'active',
-        mobilePrimary: true,
       },
       {
         id: 'automations',
@@ -208,6 +203,3 @@ export function accessibleSections(role: Parameters<typeof canAccessView>[1]): N
     items: section.items.filter((item) => canAccessView(item.id, role, item.status === 'active')),
   })).filter((section) => section.items.length > 0)
 }
-
-/** Destinations de la barre inférieure mobile (5 max). */
-export const MOBILE_PRIMARY_ITEMS: NavItem[] = ALL_NAV_ITEMS.filter((item) => item.mobilePrimary)
