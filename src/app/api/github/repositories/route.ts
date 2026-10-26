@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { errorResponse, readJsonBody, zodErrorMessage } from "@/lib/api-helpers";
+import { readJsonBody, zodErrorMessage } from "@/lib/api-helpers";
 import { getSessionUser } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
