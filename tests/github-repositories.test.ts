@@ -70,7 +70,7 @@ describe("POST /api/github/repositories", () => {
       status: 200,
       headers: { "content-type": "application/json" },
     });
-    globalThis.fetch = mock(async () => upstreamResponse) as typeof fetch;
+    globalThis.fetch = mock(async () => upstreamResponse) as unknown as typeof fetch;
   });
 
   test("rejects unauthenticated callers without sending the token to GitHub", async () => {
