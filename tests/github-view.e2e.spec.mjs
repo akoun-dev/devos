@@ -33,11 +33,17 @@ for (const scenario of [
     })
 
     await page.goto('http://127.0.0.1:3000/')
-    await page.getByRole('tab', { name: 'Inscription' }).click()
-    await page.locator('#register-name').fill('UI Test')
-    await page.locator('#register-email').fill(`github-ui-${scenario.name}-${Date.now()}@example.invalid`)
-    await page.locator('#register-password').fill('Test-password-2026')
-    await page.getByRole('button', { name: 'Créer mon compte' }).click()
+    const email = `github-ui-${scenario.name}-${Date.now()}@example.invalid`
+    const registrationStatus = await page.evaluate(async (testEmail) => {
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: 'UI Test', email: testEmail, password: 'Test-password-2026' }),
+      })
+      return response.status
+    }, email)
+    expect(registrationStatus).toBe(201)
+    await page.reload()
 
     await expect(page.getByRole('heading', { name: 'Tableau de bord' })).toBeVisible({ timeout: 20_000 })
 
