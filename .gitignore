@@ -55,3 +55,6 @@ server.log
 # Prisma / SQLite runtime artifacts
 db/*.db
 db/*.db-journal
+
+# Uploads utilisateur (maquettes, fichiers locaux) — jamais commités
+upload/
