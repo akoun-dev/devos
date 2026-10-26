@@ -31,9 +31,13 @@ Format : Hash | Type | Message | Fichiers | Atomicité (OK/KO) | Validation pre-
 | `9f3bea2` | feat(ui-shell) | Espace de travail complet — sidebar, permissions, 12 vues (TASK-019, FEATURE-UI-SHELL) : registre navigation, permissions centralisées, Prisma Project/Note/Task.projectId, 6 endpoints v1.3, shell adaptatif | KO partielle (35 code + 7 gouvernance + 15 captures + worklog en 1 commit — 2ᵉ occurrence consécutive, constat AUDIT-005 M3, à scinder à l'avenir) | lint 0 · tsc 0 · curl CRUD v1.3 · E2E desktop+mobile · xlsx validate passed · purge artefacts E2E | 2026-10-26 |
 | `99c556f` | fix(ui-shell) | Soldes mineurs AUDIT-005 (M2/M4/M5/M6/M7) — TASK-019 : détection 401 via ApiError.status (ai-chat-view, tasks-view), use-workspace useRef stable, badge « Modèle serveur », docs 16 destinations, upstream origin/main configuré (contient les livrables de l'audit AUDIT-005 committés par l'orchestrateur) | KO partielle (code 3 fichiers + livrables audit + gouvernance + worklog en 1 commit) | lint 0 · tsc 0 · soldes vérifiés par AUDIT-006 (M4/M5/M6 grep preuves) | 2026-10-26 |
 | `e296e22` | feat(ui-shell) | Vues pleine largeur (w-full) + navigation mobile tiroir seul — TASK-020 (amendement ADR-004 §4) : main max-w-5xl → w-full, BottomNav supprimée (−75 l.), mobilePrimary + MOBILE_PRIMARY_ITEMS retirés du registre, dégagements pb-24/+4,5rem | KO partielle mais magnitude réduite (3 code + 1 script xlsx + 3 gouvernance + 4 captures + worklog = 12 fichiers — 3ᵉ occurrence consécutive, constat AUDIT-006 M2) | lint 0 · tsc 0 · E2E mesures 1024/1664/375 px · xlsx validate passed · re-prouvé AUDIT-006 (score 81,3) | 2026-10-26 |
+| `e9285c5` | feat(v1.4) | Historique IA persistant + automatisations + solde drifts M3 — TASK-021/022/023 : AiConversation/AiMessage/Automation/AutomationRun (cascades + @@unique dédup dédiée), 9 endpoints (5 conversations + 4 automations dont run manuel 409), chat persistant (404 précoce, cap 20, rate limit inchangé), tick étendu (module automations.ts APRÈS runTick — cœur ADR-002 inchangé), ai-chat-view réécrite, automations-view, TEAM_STATUS/ARCHITECTURE/CHANGELOG réalignés | KO partielle (17 src + 1 prisma + 4 docs .ai + TASKS.xlsx + 1 script xlsx + 5 captures + worklog = 32 fichiers +2266/−74 — 5ᵉ occurrence consécutive, constat AUDIT-007 M2) | lint 0 · tsc 0 · curl 404 générique/run 409/400 validation croisée · dédup tick prouvée · E2E UI · purge artefacts 0/0/0 · xlsx validate passed · re-prouvé AUDIT-007 (83,8) | 2026-10-26 |
+| `5ebf39d` | merge | FEATURE-021 (GitHub par token, session parallèle) + v1.4 (IA persistante + automatisations) — résolution de divergence INC-002 : 37 commits distants réintégrés SANS écrasement, conflits résolus en combinant (API_CONTRACTS v1.4+FEATURE-021, navigation automations active, dev-os-app GithubView+AutomationsView) | OK par nature (merge 2 parents e9285c5 + b1ba008 — 0 fichier supprimé des deux côtés, prouvé AUDIT-007 par `git diff --name-status <parent>… \| rg ^D` exit 1 ×2) | db:push OK · health 200 · tsc 0 · lint 0 · coexistence GithubView+AutomationsView vérifiée · INC-002 consigné | 2026-10-26 |
+| `f9af9b9` | chore(governance) | INC-002 consigné — divergence de dépôt résolue par merge sans perte (INCIDENTS.md + worklog Task 37-bis) | OK (1 préoccupation : gouvernance — 2 fichiers) | n/a (docs) | 2026-10-26 |
 
 > Consignation AUDIT-005 (Task 34, 2026-10-26) : les 4 commits `03182be`, `dd134e3`, `97ecf28`, `9f3bea2` étaient non consignés (constat M1 — 2ᵉ session consécutive) ; ils sont consignés ci-dessus par l'audit (aucun commit créé). Règle rappelée : la consignation accompagne chaque commit à sa création.
 > Consignation AUDIT-006 (Task 36, 2026-10-26) : les 2 commits `99c556f`, `e296e22` étaient non consignés (constat M1 — 3ᵉ session consécutive) ; ils sont consignés ci-dessus par l'audit (aucun commit créé). 33 commits au total au moment de l'audit.
+> Consignation AUDIT-007 (Task 38, 2026-10-26) : les 3 commits `e9285c5`, `5ebf39d`, `f9af9b9` étaient non consignés (constat M1 — 4ᵉ session consécutive) ; consignés ci-dessus par l'audit (aucun commit créé). Les 37 commits de la session parallèle (INC-002) sont consignés en bloc dans la section dédiée ci-dessous. 40 commits au total au moment de l'audit.
 
 ### Commits auto « sauvegarde d'environnement » (consignation DEBT-019, Task 24-quater)
 Commits à message UUID générés automatiquement par l'environnement de développement (auto-sauvegarde), hors contrôle conventionnel des agents — consignés ici pour traçabilité complète de l'historique :
@@ -44,6 +48,26 @@ Commits à message UUID générés automatiquement par l'environnement de dével
 | `185d9d4` | auto-sauvegarde environnement | 1 ligne (scaffold) | 2026-10-25 |
 | `3b27e97` | auto-sauvegarde environnement | DEBT_REPORT.md 1 ligne | 2026-10-25 |
 | `5aa6d67` | auto-sauvegarde environnement | apparu après Task 22 (FEATURE-AUTH) | 2026-10-25 |
+
+### Commits « session parallèle / INC-002 » (consignation AUDIT-007, Task 38)
+37 commits produits par une session parallèle non coordonnée (FEATURE-021 « import GitHub par token » + restyle navy/blue), poussés sur origin/main pendant le travail local v1.4 — cause de la divergence résolue par le merge `5ebf39d` (INC-002, INCIDENTS.md). Consignés en bloc par l'audit (catégorie unique, à la manière des auto-commits — historique non retravaillé) :
+
+| Groupe thématique | Hashes (37) | Contenu constaté |
+|---|---|---|
+| Spec & docs FEATURE-021 | `8bcb734`, `c44ed00`, `6403de1`, `33dcfa7`, `9865ed5`, `04fda0d` | UX, critères d'acceptation (AC-021-01→12), conception technique, workflow token, statuts d'implémentation |
+| API + UI GitHub par token | `8156269`, `63117bc`, `8278850`, `59e0ef1`, `e468d51`, `64b1bc5`, `e858a53` | route /api/github/repositories (list/import), GithubView, activation navigation, anti-doublon concurrentiel |
+| Schéma & projets | `37d1e7c`, `2c53dbd`, `7176f30`, `5adcde3`, `8f07e3e`, `ead982d` | 4 champs Project source* + @@unique, serialize, affichage dépôts liés, filtres/recherche |
+| DB / migrations | `1fccab0`, `5c433f9`, `76b5e99`, `7c1d63f` | migration additive provider SQLite, historique migrations |
+| Tests & CI | `7dfa0ba`, `b050cd6`, `afe17ed`, `96cb331`, `524743b`, `4e16b71`, `477513c`, `98a5c02`, `74138d0`, `8129f0f` | tests bun (auth/privés/429), CI validate.yml, smoke tests Playwright desktop+mobile, déclarations bun-types |
+| Restyle navy/blue | `0211fe8`, `191c4ad`, `2b51d32`, `b1ba008` | design system navy/electric blue (shell, dashboard, accents assistant) |
+
+Commits supplémentaires poussés sur origin/main APRÈS le merge `5ebf39d`, présents au moment de l'AUDIT-007 mais **non intégrés localement** (constat M3 — divergence bénigne, local ancêtre du remote, fast-forward possible avant le prochain push local) :
+
+| Hash | Catégorie | Contenu constaté | Date |
+|---|---|---|---|
+| `4542ba6` | session parallèle / INC-002 (post-merge) | style(ai): redesign assistant workspace in DevOS navy palette | 2026-10-26 |
+| `64c9de7` | session parallèle / INC-002 (post-merge) | style(voice): redesign voice assistant header and status cues | 2026-10-26 |
+| `dbf5456` | session parallèle / INC-002 (post-merge) | style(voice): align status panel, alerts and announcement log with dark palette — = HEAD distant (`git ls-remote` main) au moment de l'audit | 2026-10-26 |
 
 > Règle : les auto-commits UUID futurs seront consignés dans cette section à chaque passage AGENT COMMIT (catégorie unique, sans re-travail de l'historique).
 

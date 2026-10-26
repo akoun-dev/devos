@@ -8,7 +8,7 @@
 
 🟢 **BACKEND** : Contrat API v1.4 livré — historique IA persistant (AiConversation/AiMessage, 5 endpoints), automatisations (Automation/AutomationRun, 4 endpoints + run manuel 409), chat persistant (conversationId), tick étendu (module automations.ts APRÈS runTick — cœur ADR-002 inchangé) · 15+ endpoints tous scopés userId, Zod strict, 404 générique inter-users
 🔵 **FRONTEND** : Shell complet (sidebar 4 sections + tiroir mobile seul — TASK-020), 14 vues fonctionnelles (dont Automatisations ACTIVE) ; vues w-full ; historique IA en UI ; 0 erreur console aux E2E
-🟣 **DEVOPS/DATA** : Prisma 10 modèles (User, Post démo, Task, Project, Note, VoicePreferences, ReminderLog, AiConversation, AiMessage, Automation, AutomationRun) ; dev :3000 sain ; authentifié akoun@devos.test
+🟣 **DEVOPS/DATA** : Prisma 11 modèles (User, Post démo, Task, Project, Note, VoicePreferences, ReminderLog, AiConversation, AiMessage, Automation, AutomationRun) ; dev :3000 sain ; authentifié akoun@devos.test
 🔒 **SECURITY** : CSP 10 directives + X-Frame-Options **DENY** + nosniff + Referrer-Policy + Permissions-Policy, X-Powered-By absent ; rate limiting (login 10/15 min/IP, register 5/h/IP, ai/chat 10/5 min/IP) ; JWT_SECRET env-only (fail-fast) ; 0 secret commité
 📝 **COMMIT** : session Tasks 33/35/37 consignée dans COMMIT_LOG (33 commits) ; pushes vérifiés sur origin/main (Akoun-dev)
 🔍 **REVIEWER** : REV-004 APPROUVÉE (Task 27) ; soldes mineurs AUDIT-005 vérifiés par AUDIT-006 (M4/M5/M6/M7) ; M3 (drifts doc) soldé par TASK-023 cette session
