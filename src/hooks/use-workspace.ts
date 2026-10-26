@@ -7,7 +7,7 @@
  * Fetch relatif UNIQUEMENT via apiFetch (erreurs { error } uniformes).
  */
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { ApiError, apiFetch } from '@/lib/assistant/api'
 import type { ActivityEntry, Note, Project } from '@/types/workspace'
@@ -20,8 +20,8 @@ export function useWorkspace(onUnauthorized?: () => void) {
   const [activity, setActivity] = useState<ActivityEntry[]>([])
   const [activityLoading, setActivityLoading] = useState(true)
 
-  /** 401 → notifie le parent une seule fois (session expirée). */
-  const unauthorizedRef = { current: onUnauthorized }
+  /** 401 → notifie le parent une seule fois (session expirée) — ref stable entre rendus. */
+  const unauthorizedRef = useRef(onUnauthorized)
   const guard = useCallback(
     (error: unknown) => {
       if (error instanceof ApiError && error.status === 401) {
@@ -29,7 +29,7 @@ export function useWorkspace(onUnauthorized?: () => void) {
       }
       throw error
     },
-    [unauthorizedRef]
+    []
   )
 
   const refreshProjects = useCallback(async () => {

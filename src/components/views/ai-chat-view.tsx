@@ -16,7 +16,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { useToast } from '@/hooks/use-toast'
-import { apiFetch } from '@/lib/assistant/api'
+import { ApiError, apiFetch } from '@/lib/assistant/api'
 import { formatTimeFR } from '@/lib/assistant/format'
 import { cn } from '@/lib/utils'
 import type { AiChatResponse, ChatMessage } from '@/types/workspace'
@@ -74,7 +74,7 @@ export function AiChatView({ onUnauthorized }: AiChatViewProps) {
         setMessages((prev) => [...prev, data.message])
         setRemaining(data.remaining)
       } catch (error) {
-        if (error instanceof Error && error.message.includes('401')) onUnauthorized()
+        if (error instanceof ApiError && error.status === 401) onUnauthorized()
         toast({
           title: 'Assistant IA indisponible',
           description: error instanceof Error ? error.message : undefined,
@@ -101,7 +101,7 @@ export function AiChatView({ onUnauthorized }: AiChatViewProps) {
               <Bot className="size-4 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
               Assistant IA
               <Badge variant="secondary" className="text-[10px]">
-                Modèle connecté
+                Modèle serveur
               </Badge>
             </CardTitle>
             <Button

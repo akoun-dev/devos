@@ -23,7 +23,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { TaskCard } from '@/components/views/task-card'
 import { TaskFormDialog } from '@/components/views/task-form-dialog'
-import { apiFetch } from '@/lib/assistant/api'
+import { ApiError, apiFetch } from '@/lib/assistant/api'
 import { useToast } from '@/hooks/use-toast'
 import { cn } from '@/lib/utils'
 import type { Task, TaskPriority, TaskStatus } from '@/types/assistant'
@@ -130,7 +130,7 @@ export function TasksView({
       toast({ title: `Tâche ${status === 'terminee' ? 'terminée' : 'annulée'}`, description: task.title })
       onMutated()
     } catch (error) {
-      if (error instanceof Error && error.message.includes('401')) onUnauthorized()
+      if (error instanceof ApiError && error.status === 401) onUnauthorized()
       toast({
         title: 'Impossible de modifier la tâche',
         description: error instanceof Error ? error.message : undefined,
