@@ -1,6 +1,6 @@
 # FEATURE-021 — Conception technique proposée
 
-- Statut : PROPOSITION À VALIDER
+- Statut : IMPLÉMENTATION PARTIELLE — tests et validation de déploiement en attente
 - Stack conservée : Next.js App Router, TypeScript, Zod, Prisma/SQLite, shadcn/ui.
 - Références : .ai/API_CONTRACTS.md, ADR-003, ADR-004.
 
@@ -21,7 +21,7 @@ Le client ne contacte pas directement api.github.com. Le serveur ne doit jamais 
 ## Association à un projet
 Le dépôt choisi est associé à un projet local. Ajouter de façon additive, si le schéma existant le permet, des champs optionnels sourceProvider, sourceRepositoryId, sourceRepositoryUrl et sourceDefaultBranch. Éviter les doublons via contrainte unique composée ou validation transactionnelle. Aucun champ token ne doit être ajouté au schéma.
 
-Toute évolution Prisma doit être additive, accompagnée d'une migration et synchronisée avec les contrats API. Pas de migration destructive ni d'option accept-data-loss.
+Le dépôt ne présentait pas d'historique Prisma migrations avant cette feature et utilise le script `db:push`. Les champs ajoutés au schéma sont optionnels et additifs ; synchroniser le schéma avec `bun run db:push` dans un environnement contrôlé avant déploiement. Ne pas ajouter une migration isolée qui échoue sur une base vierge ou crée un historique incohérent. Aucune migration destructive ni option accept-data-loss.
 
 ## Tests de sécurité et qualité
 - Requête sans token, token invalide, permissions insuffisantes, rate limit et GitHub indisponible.
