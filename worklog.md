@@ -446,3 +446,19 @@ Stage Summary:
 - **Constats : 0 CRITIQUE · 0 MAJEUR · 7 MINEUR** (COMMIT_LOG −3 ; TASKS.md 17≠18 ; contrat sans 429 ; « 9 directives » → 10 ; journaux rétro vides malgré incident réel ; atomicité e4cc754 ; résiduels connus tracés)
 - **Verdict : ✅ AUTORISÉ** — toutes les conditions AUDIT-003 levées et re-vérifiées en exécution (tsc 0, CSP live 10 directives, rate limiting branché+vivant 401×2, REV-004 APPROUVÉE) ; aucune régression AuthGate/scheduler/contrats ; conditions permanentes reportées pour exposition prod réelle uniquement : purge demo@devos.test (DEBT-020) + verrou XFF :3000 + resserrage CSP différé
 - Plan d'action 8 actions transmis (drifts doc J+1, incident à consigner, découpage UI, vague 2 ESLint, Vitest au déverrouillage) ; AUDIT-005 après la prochaine feature ou avant toute exposition prod réelle
+
+---
+Task ID: 31
+Agent: ORCHESTRATEUR PRINCIPAL (CTO) — DevOps
+Task: Exigence CTO « fais le push au nom de Akoun-dev » — publication du dépôt sur github.com/akoun-dev/devos.git
+
+Work Log:
+- Vérifications préalables AVANT push : `.env` (ligne 34), `db/custom.db` (ligne 56), `dev.log` (ligne 47), `server.log` (ligne 52) confirmés ignorés par .gitignore ; `git ls-files` → 0 fichier .env/.db/log suivi ; scan anti-secret des fichiers suivis (`git grep ghp_/sk-/github_pat_`) → 0 occurrence (1 faux positif descriptif dans .zscripts/task29_tasks_xlsx.py, inspecté)
+- Identité git locale posée : user.name « Akoun-dev » + email noreply akoun-dev@users.noreply.github.com (config locale dépôt, historique existant NON réécrit)
+- Remote origin ajouté ; push de la branche main avec authentification par token fourni en usage UNIQUE en ligne de commande (jamais écrit dans un fichier, jamais persisté dans .git/config ni consigné dans .ai/)
+- Vérification post-push : refs distantes + `git ls-remote` (voir section Stage Summary)
+- Avertissement sécurité transmis au CTO : token partagé en clair dans le canal de chat → rotation recommandée (GitHub → Settings → Developer settings → PAT → Regenerate) + usage recommandé de `git push` via credential manager / fine-grained PAT à portée limitée
+
+Stage Summary:
+- Dépôt publié sur https://github.com/akoun-dev/devos.git (branche main) sous identité Akoun-dev — 0 secret, 0 base de données, 0 log runtime dans le dépôt distant
+- Le token d'accès n'a été ni stocké ni journalisé (usage unique inline) ; rotation recommandée
