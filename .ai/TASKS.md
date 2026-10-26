@@ -1,18 +1,18 @@
 # 📊 BACKLOG CENTRAL — Vue lisible (miroir de TASKS.xlsx)
 
-> **Dernière mise à jour** : 2026-10-26 (UTC, itérations v1.4 : IA persistante + automatisations + solde M3) · **Responsable** : AGENT 2 · **Source de vérité** : `.ai/TASKS.xlsx`
+> **Dernière mise à jour** : 2026-10-26 (UTC, refonte UI « DevOS Intelligence » — TASK-024) · **Responsable** : AGENT 2 · **Source de vérité** : `.ai/TASKS.xlsx`
 
 ## Statistiques
 
 | Statut | Nombre |
 |---|---|
-| ✅ Terminées | 23 |
+| ✅ Terminées | 24 |
 | 🔄 En cours | 0 |
 | ⏳ À faire | 0 |
 | 🚫 Bloquées | 0 |
-| **Total** | **23** |
+| **Total** | **24** |
 
-**Progression moyenne : 100 %** · **Score santé projet : 81,3/100 (AUDIT-006)** — **AUDIT-007 déclenché** après TASK-021/022/023 (règle « audit après chaque feature ») · **Dette : 22 items — 17 TRAITÉ · 2 EN COURS · 1 REPORTÉ · 1 ACCEPTÉE · 1 OUVERT (018)**
+**Progression moyenne : 100 %** · **Score santé projet : 83,8/100 (AUDIT-007)** — **AUDIT-008 à déclencher** après la prochaine feature (règle « audit après chaque feature ») · **Dette : 22 items — 17 TRAITÉ · 2 EN COURS · 1 REPORTÉ · 1 ACCEPTÉE · 1 OUVERT (018)**
 
 ## Tâches
 
@@ -41,6 +41,7 @@
 | TASK-021 | PRODUIT | DevOS — Itérations v1.4 (FEATURE-AI-HISTORY, Task 37) | Historique IA persistant : AiConversation/AiMessage (cascade), 5 endpoints conversations, chat persistant (conversationId, titre auto, 404 générique), UI reprise/suppression | Équipe complète (CTO) | ✅ TERMINÉ | 100% | P1 | curl : auto-titre + messageCount 2, chat #2 LLM réel, rename 200, 400 Zod, inter-users 404, 401 sans cookie · E2E UI : reload → conversation conservée → 2 messages restaurés (capture) · lint 0 · tsc 0 | ✅ PASS · contrat v1.4 · purge UI vérifiée · backlog Task 33 soldé |
 | TASK-022 | PRODUIT | DevOS — Itérations v1.4 (FEATURE-AUTOMATIONS, Task 37) | Automatisations : Automation/AutomationRun (dédup dédiée, cœur ADR-002 inchangé), 2 déclencheurs (schedule HH:MM+jours, condition retards≥seuil), 4 endpoints + run manuel 409, vue ACTIVE complète | Équipe complète (CTO) | ✅ TERMINÉ | 100% | P1 | curl : 201 schedule, 400 validation croisée, run 200 puis 409 même seconde, détail+runs 200 · E2E tick : tâche en retard → annonce type automation parlée au tick#1, tick#2 = [] dédup prouvée · E2E UI : création dialog, test, historique (captures), suppression confirmée · mobile tiroir OK · lint 0 · tsc 0 | ✅ PASS · template uniquement (intégrité ADR-002) · purge artefacts 0/0/0 · 1 menu avancé activé |
 | TASK-023 | GOUVERNANCE | DevOS — Solde M3 hérité (AUDIT-005/006, Task 37) | 3 drifts documentaires soldés : TEAM_STATUS.md (en-tête + KPI + SAMEORIGIN→DENY), ARCHITECTURE.md §4 (modèle réel 10 tables), CHANGELOG (9→10 directives + entrée 0.6.0) | DOC (CTO) | ✅ TERMINÉ | 100% | P2 | rg verrou : 0 occurrence résiduelle des 3 motifs · faits recoupés avec AUDIT_REPORT/COMMIT_LOG | ✅ PASS · M3 soldé après 3 sessions |
+| TASK-024 | PRODUIT | DevOS — Refonte UI Assistant (maquette CTO, Task 38) | Vue « DevOS Intelligence » : en-tête badge vert Unifie, carte bienvenue, composer (pièce jointe « bientôt », dictée Web Speech via hook use-speech-dictation, envoi ↑), lecture vocale des réponses, chips capacités dont « Historique partagé » ouvrant le Sheet des conversations persistées | Équipe complète (CTO) | ✅ TERMINÉ | 100% | P1 | E2E agent-browser : rendu maquette desktop+mobile (captures), toast pièce jointe, dictée mockée → champ prouvé, envoi réel (réponse contextuelle + quota 9), Sheet reprise « salut » + purge 2 artefacts (chip 3→1), « Nouvelle conversation » → bienvenue exacte, 0 erreur console · lint 0 · tsc 0 | ✅ PASS · 0 endpoint touché (contrat v1.4 intact) · a11y aria-labels/44px · hooks use-speech-dictation réutilisable |
 
 ## Règles de dépendance rappelées
 - Frontend bloqué tant que contrat API non validé (`API_CONTRACTS.md`)
@@ -48,4 +49,4 @@
 - Aucune tâche TERMINÉE sans : commits propres + revue positive ; frontend : + a11y + perf
 - Aucune livraison PROD sans audit global ≥ 60/100
 
-> Prochaine étape : **AUDIT-007** déclenché après TASK-021/022/023 (règle « audit après chaque feature ») ; itérations suivantes candidates : Git/GitHub/Terminal (vues planned restantes), sauvegardes, mode mains libres, renommage conversations en UI ; restant **avant toute exposition prod réelle** — DEBT-020 (purge des comptes de démonstration) + verrouillage accès direct :3000 hors passerelle ; dette : DEBT-017 (découpage settings-screen.tsx 632 l.), DEBT-018 (doc), DEBT-003 vague 2 ESLint.
+> Prochaine étape : **AUDIT-008** après la prochaine feature (règle « audit après chaque feature ») ; suivi AUDIT-007 : M3 soldé avant TASK-024 (merge FF a654436), M5 vérifié déjà corrigé (`branches: [main]`) ; itérations candidates : pièces jointes IA (contrat v1.5), renommage conversations en UI, Git/Terminal (vues planned restantes), sauvegardes ; restant **avant toute exposition prod réelle** — DEBT-020 (purge des comptes de démonstration) + verrouillage accès direct :3000 hors passerelle ; dette : DEBT-017 (découpage settings-screen.tsx 632 l.), DEBT-018 (doc), DEBT-003 vague 2 ESLint.

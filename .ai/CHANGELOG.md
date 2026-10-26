@@ -2,6 +2,16 @@
 
 Format : [Keep a Changelog](https://keepachangelog.com) — versions sémantiques.
 
+## [0.6.1-intelligence-ui] — 2026-10-26
+### Ajouté — Refonte UI « DevOS Intelligence » (TASK-024, maquette CTO, 0 changement d'API)
+- **Vue Assistant refondue** : en-tête logo carré bleu + titre « DevOS Intelligence » + badge vert « Unifie » + sous-titre « Assistant IA unifié · Texte et voix » ; carte de bienvenue (état vide) avec suggestions contextuelles ; fil de messages en bulles arrondies avec badge « Persistée » et quota restant
+- **Dictée vocale (nouveau hook `use-speech-dictation`)** : bouton micro du composer, Web Speech fr-FR, transcript inséré dans le champ pour relecture avant envoi, dégradation gracieuse (toast) si l'API est absente
+- **Lecture vocale des réponses** : bouton volume sur chaque réponse de l'IA (Web Speech local via `lib/assistant/tts`)
+- **Composer maquette** : placeholder « Posez votre question ou donnez une commande... », « Pièce jointe » annoncée honnêtement « bientôt disponible » (ADR-004 §5 — aucun faux lien mort), bouton envoi flèche ↑
+- **Chips de capacités** : « Historique partagé · N » (ouvre un Sheet latéral : reprise, suppression, compteur dynamique des conversations persistées), « Réponses vocales », « Commandes DevOS »
+### Gouvernance
+- Contrat API v1.4 inchangé (0 endpoint touché) ; TASKS 24/24 ; conditions AUDIT-007 soldées avant livraison (M3 : merge FF a654436 ; M5 : `branches: [main]` vérifié) ; AUDIT-008 à déclencher après la prochaine feature
+
 ## [0.6.0-workspace-iterations] — 2026-10-26
 ### Ajouté — Espace de travail + itérations (Tasks 33/35/37, contrat API v1.3 → v1.4, ADR-004)
 - **FEATURE-UI-SHELL (TASK-019)** : shell complet — sidebar 4 sections (16 destinations), permissions centralisées (`permissions.ts` + matrice ROLES_PERMISSIONS), 12 vues fonctionnelles sur données réelles ; +6 endpoints v1.3 (projects, notes, activity, ai/chat) ; +2 modèles Prisma (Project, Note) + Task.projectId

@@ -71,6 +71,17 @@ Commits supplémentaires poussés sur origin/main APRÈS le merge `5ebf39d`, pr�
 
 > Règle : les auto-commits UUID futurs seront consignés dans cette section à chaque passage AGENT COMMIT (catégorie unique, sans re-travail de l'historique).
 
+## Session Task 38 (2026-10-26) — TASK-024 refonte UI « DevOS Intelligence »
+
+Conditions AUDIT-007 soldées AVANT livraison : M3 (3 commits distants) intégrés en `--ff-only` (HEAD local = `a654436` = origin/main avant nouveau travail) ; M5 vérifié — `branches: [main]` déjà correct dans validate.yml (introduit `afe17ed`, corrigé ensuite ; aucune modification requise).
+
+| Hash | Catégorie | Contenu |
+|---|---|---|
+| `be695aa` | feat(ai) | TASK-024 : vue « DevOS Intelligence » selon maquette CTO (badge Unifie, bienvenue, composer dictée/pièce jointe/envoi ↑, lecture vocale réponses, chips + Sheet historique) + hook use-speech-dictation + 7 captures E2E + .gitignore upload/ |
+| *(commit gouvernance de cette session)* | chore(governance) | TASK-024 consignée (TASKS.xlsx/md 24/24, ligne 28), CHANGELOG 0.6.1, TEAM_STATUS, worklog Task 38 |
+
+Détails : 0 endpoint touché (contrat v1.4 inchangé) · purge des 2 conversations de test créées par la session (chip « Historique partagé » 3→1, conversation préexistante « salut » préservée) · credentials : hash bcrypt du compte CTO akoun@devos.test réinitialisé localement (session browser perdue) — le mot de passe reste ORAL/local uniquement, JAMAIS commité (worklog tracké par git).
+
 ## Synchronisation post-session (2026-10-25)
 - Hash final du commit docs de clôture : `a8bbbc8` — session FEATURE-001 complète : **7ddb0c9 → f2485b5 → eb1a3d9 → a8bbbc8**.
 - Aucun fichier `.env` commité ; inventaire vérifié par `git status` avant chaque commit ; `git log --oneline` vérifié en fin de session.
