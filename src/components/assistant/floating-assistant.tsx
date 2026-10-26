@@ -126,7 +126,7 @@ export function FloatingAssistant() {
     <>
       <Button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={() => { setOpen(true); setConversational(true); window.setTimeout(() => startListening(), 180) }}
         aria-label="Ouvrir l’assistant DevOS"
         className="fixed bottom-5 right-5 z-40 size-14 rounded-full border border-blue-300/30 bg-gradient-to-br from-blue-600 to-indigo-600 p-0 text-white shadow-xl shadow-blue-950/40 transition hover:scale-105 hover:from-blue-500 hover:to-indigo-500"
       >
@@ -137,7 +137,7 @@ export function FloatingAssistant() {
       </Button>
 
       {open ? (
-        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-slate-950/70 p-0 backdrop-blur-sm sm:items-center sm:p-4" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) { stopListening(); setOpen(false) } }}>
+        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-slate-950/70 p-0 backdrop-blur-sm sm:items-center sm:p-4" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) { stopListening(); setConversational(false); setOpen(false) } }}>
           <section role="dialog" aria-modal="true" aria-labelledby="devos-floating-title" className="flex h-[min(760px,92dvh)] w-full max-w-xl flex-col overflow-hidden rounded-t-2xl border border-blue-400/25 bg-[#09172b] text-slate-100 shadow-2xl shadow-black/50 sm:h-[min(760px,88dvh)] sm:rounded-2xl">
             <header className="flex items-center gap-3 border-b border-slate-700/80 bg-gradient-to-r from-blue-600/20 via-indigo-600/15 to-transparent p-4">
               <div className="flex size-11 items-center justify-center rounded-xl border border-blue-300/25 bg-blue-500/15 text-blue-200"><Bot className="size-6" /></div>
@@ -145,7 +145,7 @@ export function FloatingAssistant() {
                 <h2 id="devos-floating-title" className="font-semibold">Assistant DevOS</h2>
                 <p className="text-xs text-slate-400">Texte et voix dans une seule conversation</p>
               </div>
-              <Button variant="ghost" size="icon" className="text-slate-300 hover:bg-white/10 hover:text-white" onClick={() => { stopListening(); setOpen(false) }} aria-label="Fermer l’assistant"><X className="size-5" /></Button>
+              <Button variant="ghost" size="icon" className="text-slate-300 hover:bg-white/10 hover:text-white" onClick={() => { stopListening(); setConversational(false); setOpen(false) }} aria-label="Fermer l’assistant"><X className="size-5" /></Button>
             </header>
 
             <div className="relative flex flex-1 flex-col items-center justify-center overflow-hidden">
