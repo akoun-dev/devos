@@ -29,6 +29,7 @@ export function FloatingAssistant() {
   const [open, setOpen] = useState(false)
   const [listening, setListening] = useState(false)
   const [busy, setBusy] = useState(false)
+  const [conversationId, setConversationId] = useState<string | null>(null)
   const [input, setInput] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [messages, setMessages] = useState<Message[]>([
@@ -101,14 +102,16 @@ export function FloatingAssistant() {
     setInput('')
     setBusy(true)
     try {
-      const data = await apiFetch<{ message: { content: string } }>('/api/ai/chat', {
+      const data = await apiFetch<{ message: { content: string }; conversationId: string }>('/api/ai/chat', {
         method: 'POST',
         body: JSON.stringify({
           messages: next.filter((message) => message.role === 'user' || message.role === 'assistant').slice(-20),
           context: 'general',
+          ...(conversationId ? { conversationId } : {}),
         }),
       })
       const answer = data.message.content
+      if (data.conversationId) setConversationId(data.conversationId)
       setMessages((current) => [...current, { role: 'assistant', content: answer }])
       speak(answer, { lang: 'fr-FR' })
     } catch (err) {
