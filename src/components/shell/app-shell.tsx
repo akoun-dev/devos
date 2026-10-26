@@ -17,6 +17,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { PlannedNav, SideNav } from '@/components/shell/side-nav'
+import { FloatingAssistant } from '@/components/assistant/floating-assistant'
 import { findNavItem } from '@/lib/navigation'
 import { cn } from '@/lib/utils'
 import type { AuthUser } from '@/types/assistant'
@@ -204,6 +205,7 @@ export function AppShell({
         </footer>
 
       </div>
+      <FloatingAssistant />
     </div>
   )
 }
