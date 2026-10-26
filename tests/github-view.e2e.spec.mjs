@@ -32,7 +32,7 @@ for (const scenario of [
       })
     })
 
-    await page.goto('/')
+    await page.goto('http://127.0.0.1:3000/')
     await page.getByRole('tab', { name: 'Inscription' }).click()
     await page.locator('#register-name').fill('UI Test')
     await page.locator('#register-email').fill(`github-ui-${scenario.name}-${Date.now()}@example.invalid`)
