@@ -654,3 +654,26 @@ Stage Summary:
 - Nouveau hook réutilisable use-speech-dictation (dictée → champ) ; duplication SpeechRecognition floating-assistant acceptée (2 sites — refactor candidat backlog)
 - Conditions AUDIT-007 M3/M5 soldées AVANT la livraison, tracées dans COMMIT_LOG ; AUDIT-008 à déclencher après la prochaine feature (règle post-feature)
 - Purge : 0 conversation/tâche/artefact de test résiduel créé par la session (chip 3→1 prouvé) ; credentials CTO jamais commités
+
+---
+Task ID: 40
+Agent: CTO (Orchestrateur Principal) + Équipe
+Task: INC-003 — « le compte de connexion ne fonctionne plus » + console hydration mismatch (TASK-025)
+
+Work Log:
+- Signalement CTO : login impossible + erreur console « A tree hydrated but some attributes of the server rendered HTML didn't match » (attributs bis_skin_checked / bis_register / __processed_* sur body et des divs internes)
+- Analyse AVANT action : dev.log (POST /api/auth/login 401 avec SELECT User exécuté sans erreur — la DB existe, la requête aboutit, identifiants refusés) · inspection READ-ONLY via .zscripts/task25_check_users.ts → **0 utilisateur, 0 tâche, 0 projet, 0 conversation, 0 automatisation** — db/custom.db recréée VIDE (mtime 16:27 > xlsx gouvernance 13:09) · hydratation : les seuls attributs en diff portent les signatures d'extension navigateur (Bitdefender bis_*) — aucun diff applicatif, cause externe confirmée
+- TASK-025 enregistrée dans TASKS.xlsx AVANT implémentation (script .zscripts/task25_tasks_xlsx.py, pattern task37 : styles copiés ligne 28, TOTAL 29→30, STATISTIQUES 5:29) — intégrité prouvée : 25 IDs uniques 5-29, 25/25 TERMINÉ, TOTAL ligne 30 « 25 tâches » (lecture croisée B28/B29/B30/C5)
+- Découverte en cascade : après recréation du compte (upsert bcryptjs coût 10 via .zscripts/task25_reset_akoun.ts, mot de passe transmis par variable d'environnement TASK25_PW — JAMAIS écrit dans un fichier versionné), login → **500** : .env amputé de JWT_SECRET (2ᵉ perte du re-provisionnement — même pattern qu'INC-001, 3ᵉ occurrence globale) — preuve dev.log « Error: JWT_SECRET manquant ou trop court »
+- Remédiation : JWT_SECRET 48 o régénéré dans .env (reload auto Next, sans redémarrage) → login 200 + me 200 (curl, jar détruit)
+- E2E agent-browser (compte CTO restauré) : login UI → « Bienvenue, Akoun ! » shell 12 vues · vue DevOS Intelligence intacte (badge Unifie, bienvenue, composer, chips — capture task25-intelligence-vue.png) · envoi réel Enter → réponse IA LLM + quota 9 + chip « Historique partagé · 1 » = persistance v1.4 fonctionnelle (capture task25-conversation-persistee.png) · Sheet → suppression conversation de test → chip sans compteur = PURGE complète · mobile 375 : mainW=375, hasHScroll=false (capture task25-mobile-375.png) · 0 erreur console, 0 erreur page
+- Observation UX mineure (backlog, hors périmètre) : le bouton d'envoi du composer Intelligence est partiellement recouvert par l'assistant flottant en viewport 1280 — la voie clavier (Enter) fonctionne ; consigné dans TASKS.md « Prochaine étape »
+- Correctif hydratation : suppressHydrationWarning sur <body> (src/app/layout.tsx, 1 attribut + commentaire justificatif — l'avertissement racine disparaît ; les warnings sur éléments internes relèvent de la désactivation de l'extension côté CTO, documenté dans la réponse)
+- Gouvernance : INCIDENTS.md INC-003 (récurrence INC-001 explicitée) · LESSONS_LEARNED +3 leçons (credential communiqué au canal / export état fin de session / diagnostic diff d'attributs) · TASKS.md miroir 25/25 · COMMIT_LOG Task 40 + complétion du placeholder Task 38 (f00c40d)
+- **Constat d'intégrité Task 40** : `git fetch` → local main AHEAD de 2 commits (be695aa + f00c40d, TASK-024) — la mention Task 38 « push Akoun-dev → origin/main (ls-remote prouvé) » s'est révélée INEXACTE (push jamais abouti, origin/main resté à a654436) ; corrigé dans cette session : les 2 commits + les commits Task 40 sont poussés avec preuve `git ls-remote` publique
+
+Stage Summary:
+- Accès CTO RESTAURÉ et prouvé E2E (login UI + API) ; identifiants transmis dans le canal privé (jamais commités) — consigne : les changer à volonté sur demande
+- Cause racine = 3ᵉ occurrence du pattern INC-001 (DB + .env non persistants entre sessions) : **le chantier « sauvegardes » devient prioritaire avant toute itération à valeur de données** — données antérieures définitivement perdues (conversations/automatisations du CTO)
+- Hydratation : cause externe (extension Bitdefender), neutralisation racine appliquée (1 attribut), 0 changement backend (contrat v1.4 intact), 0 endpoint touché
+- Purge : espace CTO propre (0 conversation/artefact de test résiduel) ; captures task25-* conservées comme preuves

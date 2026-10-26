@@ -78,9 +78,20 @@ Conditions AUDIT-007 soldées AVANT livraison : M3 (3 commits distants) intégr�
 | Hash | Catégorie | Contenu |
 |---|---|---|
 | `be695aa` | feat(ai) | TASK-024 : vue « DevOS Intelligence » selon maquette CTO (badge Unifie, bienvenue, composer dictée/pièce jointe/envoi ↑, lecture vocale réponses, chips + Sheet historique) + hook use-speech-dictation + 7 captures E2E + .gitignore upload/ |
-| *(commit gouvernance de cette session)* | chore(governance) | TASK-024 consignée (TASKS.xlsx/md 24/24, ligne 28), CHANGELOG 0.6.1, TEAM_STATUS, worklog Task 38 |
+| `f00c40d` | chore(governance) | TASK-024 consignée (TASKS.xlsx/md 24/24, ligne 28), CHANGELOG 0.6.1, TEAM_STATUS, worklog Task 38 |
 
 Détails : 0 endpoint touché (contrat v1.4 inchangé) · purge des 2 conversations de test créées par la session (chip « Historique partagé » 3→1, conversation préexistante « salut » préservée) · credentials : hash bcrypt du compte CTO akoun@devos.test réinitialisé localement (session browser perdue) — le mot de passe reste ORAL/local uniquement, JAMAIS commité (worklog tracké par git).
+
+⚠️ Constat Task 40 : ces 2 commits (be695aa, f00c40d) n'ont jamais été poussés — la mention « push Akoun-dev → origin/main (ls-remote prouvé) » du worklog Task 38 était inexacte (origin/main resté à a654436) ; poussés par la session Task 40 avec preuve publique.
+
+### Session Task 40 — INC-003 (restauration accès CTO + hydratation, TASK-025)
+
+| Hash | Catégorie | Contenu |
+|---|---|---|
+| `275603b` | fix(ui) | TASK-025 : suppressHydrationWarning sur `<body>` (warning causé par extension navigateur — attributs bis_*) + scripts remédiation (.zscripts/task25_check_users.ts READ-ONLY, task25_reset_akoun.ts bcrypt via env var, task25_tasks_xlsx.py) + 4 captures E2E |
+| *(commit gouvernance de cette session)* | chore(governance) | TASK-025 consignée (TASKS.xlsx/md 25/25), INCIDENTS INC-003, LESSONS_LEARNED +3, COMMIT_LOG (cette section + complétion Task 38), worklog Task 40 |
+
+Détails : diagnostic AVANT action (dev.log 401 puis 500 JWT_SECRET · inspection DB = 0 utilisateur · signatures bis_* = extension) · JWT_SECRET 48 o régénéré dans .env (jamais commité) · compte CTO recréé + mot de passe transmis dans le canal privé · E2E agent-browser complet avec purge · 0 endpoint touché (contrat v1.4 intact) · les données antérieures de la base locale sont définitivement perdues (chantier « sauvegardes » priorisé).
 
 ## Synchronisation post-session (2026-10-25)
 - Hash final du commit docs de clôture : `a8bbbc8` — session FEATURE-001 complète : **7ddb0c9 → f2485b5 → eb1a3d9 → a8bbbc8**.

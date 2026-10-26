@@ -1,18 +1,18 @@
 # 📊 BACKLOG CENTRAL — Vue lisible (miroir de TASKS.xlsx)
 
-> **Dernière mise à jour** : 2026-10-26 (UTC, refonte UI « DevOS Intelligence » — TASK-024) · **Responsable** : AGENT 2 · **Source de vérité** : `.ai/TASKS.xlsx`
+> **Dernière mise à jour** : 2026-10-26 (UTC, incident INC-003 — restauration accès CTO — TASK-025) · **Responsable** : AGENT 2 · **Source de vérité** : `.ai/TASKS.xlsx`
 
 ## Statistiques
 
 | Statut | Nombre |
 |---|---|
-| ✅ Terminées | 24 |
+| ✅ Terminées | 25 |
 | 🔄 En cours | 0 |
 | ⏳ À faire | 0 |
 | 🚫 Bloquées | 0 |
-| **Total** | **24** |
+| **Total** | **25** |
 
-**Progression moyenne : 100 %** · **Score santé projet : 83,8/100 (AUDIT-007)** — **AUDIT-008 à déclencher** après la prochaine feature (règle « audit après chaque feature ») · **Dette : 22 items — 17 TRAITÉ · 2 EN COURS · 1 REPORTÉ · 1 ACCEPTÉE · 1 OUVERT (018)**
+**Progression moyenne : 100 %** · **Score santé projet : 83,8/100 (AUDIT-007)** — **AUDIT-008 à déclencher** après la prochaine feature (règle « audit après chaque feature ») — **INC-003 (3ᵉ occurrence du pattern INC-001) : chantier « sauvegardes » priorisé AVANT toute itération à valeur de données** · **Dette : 22 items — 17 TRAITÉ · 2 EN COURS · 1 REPORTÉ · 1 ACCEPTÉE · 1 OUVERT (018)**
 
 ## Tâches
 
@@ -42,6 +42,7 @@
 | TASK-022 | PRODUIT | DevOS — Itérations v1.4 (FEATURE-AUTOMATIONS, Task 37) | Automatisations : Automation/AutomationRun (dédup dédiée, cœur ADR-002 inchangé), 2 déclencheurs (schedule HH:MM+jours, condition retards≥seuil), 4 endpoints + run manuel 409, vue ACTIVE complète | Équipe complète (CTO) | ✅ TERMINÉ | 100% | P1 | curl : 201 schedule, 400 validation croisée, run 200 puis 409 même seconde, détail+runs 200 · E2E tick : tâche en retard → annonce type automation parlée au tick#1, tick#2 = [] dédup prouvée · E2E UI : création dialog, test, historique (captures), suppression confirmée · mobile tiroir OK · lint 0 · tsc 0 | ✅ PASS · template uniquement (intégrité ADR-002) · purge artefacts 0/0/0 · 1 menu avancé activé |
 | TASK-023 | GOUVERNANCE | DevOS — Solde M3 hérité (AUDIT-005/006, Task 37) | 3 drifts documentaires soldés : TEAM_STATUS.md (en-tête + KPI + SAMEORIGIN→DENY), ARCHITECTURE.md §4 (modèle réel 10 tables), CHANGELOG (9→10 directives + entrée 0.6.0) | DOC (CTO) | ✅ TERMINÉ | 100% | P2 | rg verrou : 0 occurrence résiduelle des 3 motifs · faits recoupés avec AUDIT_REPORT/COMMIT_LOG | ✅ PASS · M3 soldé après 3 sessions |
 | TASK-024 | PRODUIT | DevOS — Refonte UI Assistant (maquette CTO, Task 38) | Vue « DevOS Intelligence » : en-tête badge vert Unifie, carte bienvenue, composer (pièce jointe « bientôt », dictée Web Speech via hook use-speech-dictation, envoi ↑), lecture vocale des réponses, chips capacités dont « Historique partagé » ouvrant le Sheet des conversations persistées | Équipe complète (CTO) | ✅ TERMINÉ | 100% | P1 | E2E agent-browser : rendu maquette desktop+mobile (captures), toast pièce jointe, dictée mockée → champ prouvé, envoi réel (réponse contextuelle + quota 9), Sheet reprise « salut » + purge 2 artefacts (chip 3→1), « Nouvelle conversation » → bienvenue exacte, 0 erreur console · lint 0 · tsc 0 | ✅ PASS · 0 endpoint touché (contrat v1.4 intact) · a11y aria-labels/44px · hooks use-speech-dictation réutilisable |
+| TASK-025 | GOUVERNANCE | DevOS — Incident INC-003 (accès CTO + hydratation, Task 40) | Restauration du compte akoun@devos.test (base SQLite recréée vide au re-provisionnement — 3ᵉ occurrence du pattern INC-001) + JWT_SECRET régénéré + suppressHydrationWarning sur <body> (warning causé par une extension navigateur — attributs bis_*) | ORCHESTRATEUR (CTO) | ✅ TERMINÉ | 100% | P1 | Diagnostic préalable prouvé (dev.log 401 puis 500, inspection DB READ-ONLY = 0 utilisateur, signatures bis_*) · curl login 200 + me 200 · E2E agent-browser : login UI → vue Intelligence → chat persistant (réponse IA réelle, quota 9, chip · 1) → purge complète (chip sans compteur) · mobile 375 mainW=375 hasHScroll=false · lint 0 · tsc 0 | ✅ PASS · mot de passe CTO transmis dans le canal privé, JAMAIS commité · 0 endpoint touché (contrat v1.4 intact) · chantier « sauvegardes » priorisé (leçon INC-003) |
 
 ## Règles de dépendance rappelées
 - Frontend bloqué tant que contrat API non validé (`API_CONTRACTS.md`)
@@ -49,4 +50,4 @@
 - Aucune tâche TERMINÉE sans : commits propres + revue positive ; frontend : + a11y + perf
 - Aucune livraison PROD sans audit global ≥ 60/100
 
-> Prochaine étape : **AUDIT-008** après la prochaine feature (règle « audit après chaque feature ») ; suivi AUDIT-007 : M3 soldé avant TASK-024 (merge FF a654436), M5 vérifié déjà corrigé (`branches: [main]`) ; itérations candidates : pièces jointes IA (contrat v1.5), renommage conversations en UI, Git/Terminal (vues planned restantes), sauvegardes ; restant **avant toute exposition prod réelle** — DEBT-020 (purge des comptes de démonstration) + verrouillage accès direct :3000 hors passerelle ; dette : DEBT-017 (découpage settings-screen.tsx 632 l.), DEBT-018 (doc), DEBT-003 vague 2 ESLint.
+> Prochaine étape : **INC-003 soldé (TASK-025)** — **chantier « sauvegardes » DÉSORMAIS PRIORITAIRE avant toute itération à valeur de données** (la base SQLite et `.env` ne survivent pas aux re-provisionnements — 3 occurrences : INC-001, Task 38, INC-003) ; **AUDIT-008** après la prochaine feature (règle « audit après chaque feature ») ; itérations candidates : sauvegardes, pièces jointes IA (contrat v1.5), renommage conversations en UI, Git/Terminal (vues planned restantes), correction UX mineure « bouton d'envoi partiellement recouvert par l'assistant flottant dans la vue Intelligence » (backlog — la voie clavier Enter fonctionne) ; restant **avant toute exposition prod réelle** — DEBT-020 (purge des comptes de démonstration) + verrouillage accès direct :3000 hors passerelle ; dette : DEBT-017 (découpage settings-screen.tsx 632 l.), DEBT-018 (doc), DEBT-003 vague 2 ESLint.
