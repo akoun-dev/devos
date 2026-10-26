@@ -18,7 +18,6 @@ import {
   Github,
   LayoutDashboard,
   ListChecks,
-  Mic,
   RefreshCw,
   ScrollText,
   Settings,
@@ -65,16 +64,9 @@ export const NAV_SECTIONS: NavSection[] = [
     items: [
       {
         id: 'ai-chat',
-        label: 'Assistant IA',
-        description: 'Conversations, analyses, résumés',
+        label: 'Assistant DevOS',
+        description: 'Assistant unifié : conversation, voix, rappels et annonces',
         icon: Bot,
-        status: 'active',
-      },
-      {
-        id: 'voice',
-        label: 'Assistant vocal',
-        description: 'Mode JARVIS : annonces et rappels parlés',
-        icon: Mic,
         status: 'active',
       },
       {
