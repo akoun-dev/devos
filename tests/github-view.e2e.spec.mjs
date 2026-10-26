@@ -20,7 +20,7 @@ for (const scenario of [
     await page.setViewportSize(scenario.viewport)
 
     await page.route('**/api/github/repositories', async (route) => {
-      const body = route.request().postDataJSON() as { action?: string }
+      const body = route.request().postDataJSON()
       if (body.action === 'list') {
         await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ repositories: [privateRepository] }) })
         return
