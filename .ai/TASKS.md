@@ -1,18 +1,18 @@
 # 📊 BACKLOG CENTRAL — Vue lisible (miroir de TASKS.xlsx)
 
-> **Dernière mise à jour** : 2026-10-26 (UTC, vues w-full + navigation tiroir seul) · **Responsable** : AGENT 2 · **Source de vérité** : `.ai/TASKS.xlsx`
+> **Dernière mise à jour** : 2026-10-26 (UTC, itérations v1.4 : IA persistante + automatisations + solde M3) · **Responsable** : AGENT 2 · **Source de vérité** : `.ai/TASKS.xlsx`
 
 ## Statistiques
 
 | Statut | Nombre |
 |---|---|
-| ✅ Terminées | 20 |
+| ✅ Terminées | 23 |
 | 🔄 En cours | 0 |
 | ⏳ À faire | 0 |
 | 🚫 Bloquées | 0 |
-| **Total** | **20** |
+| **Total** | **23** |
 
-**Progression moyenne : 100 %** · **Score santé projet : 80,4/100 (AUDIT-005)** — **AUDIT-006 déclenché** après TASK-020 (règle « audit après chaque feature ») · **Dette : 22 items — 17 TRAITÉ · 2 EN COURS · 1 REPORTÉ · 1 ACCEPTÉE · 1 OUVERT (018)**
+**Progression moyenne : 100 %** · **Score santé projet : 81,3/100 (AUDIT-006)** — **AUDIT-007 déclenché** après TASK-021/022/023 (règle « audit après chaque feature ») · **Dette : 22 items — 17 TRAITÉ · 2 EN COURS · 1 REPORTÉ · 1 ACCEPTÉE · 1 OUVERT (018)**
 
 ## Tâches
 
@@ -38,6 +38,9 @@
 | TASK-018 | PRODUIT | DevOS — Authentification (FEATURE-AUTH, Task 29) | Responsivité mobile de la vue de connexion (AuthGate) : min-h-dvh + centrage sûr (my-auto), paddings scoped 320 px, h1 sr-only | Frontend / UX (CTO) | ✅ TERMINÉ | 100% | P2 | agent-browser 375/320/667×375 paysage/1280 (hasHScroll=false partout, cardTop=40 px au scroll-top en paysage) · E2E mobile connexion démo · lint 0 · tsc 0 | ✅ PASS · 8 captures before/after · toast mobile top observé · environnement : JWT_SECRET régénéré + seed rejoué (dérive restauration) |
 | TASK-019 | PRODUIT | DevOS — Espace de travail (FEATURE-UI-SHELL, Task 33) | Shell complet : sidebar 4 sections + permissions centralisées + 12 vues fonctionnelles + navigation mobile 5 destinations (ADR-004, contrats v1.3) | Équipe complète (CTO) | ✅ TERMINÉ | 100% | P1 | lint 0 · tsc 0 · curl CRUD projects/notes/activity + ai/chat LLM réel · E2E navigateur desktop+mobile (créations UI, smart views, tiroir, 0 erreur console) | ✅ PASS · ADR-004 + ROLES_PERMISSIONS.md · xlsx validate passed · purge artefacts E2E |
 | TASK-020 | PRODUIT | DevOS — Espace de travail (FEATURE-UI-SHELL, Task 35) | Vues w-full sur web (max-w-5xl retiré) + navigation mobile réduite au tiroir (BottomNav supprimée, amendement ADR-004 §4) | Frontend / UX (CTO) | ✅ TERMINÉ | 100% | P2 | Mesures E2E : desktop 1280 main=1024 px / 1920 main=1664 px (max-width none) · mobile 375 bottomNavPresent=false, tiroir complet opérationnel, hasHScroll=false · lint 0 · tsc 0 | ✅ PASS · ADR-004 amendé · xlsx validate passed · −76 l. (bottom-nav.tsx) |
+| TASK-021 | PRODUIT | DevOS — Itérations v1.4 (FEATURE-AI-HISTORY, Task 37) | Historique IA persistant : AiConversation/AiMessage (cascade), 5 endpoints conversations, chat persistant (conversationId, titre auto, 404 générique), UI reprise/suppression | Équipe complète (CTO) | ✅ TERMINÉ | 100% | P1 | curl : auto-titre + messageCount 2, chat #2 LLM réel, rename 200, 400 Zod, inter-users 404, 401 sans cookie · E2E UI : reload → conversation conservée → 2 messages restaurés (capture) · lint 0 · tsc 0 | ✅ PASS · contrat v1.4 · purge UI vérifiée · backlog Task 33 soldé |
+| TASK-022 | PRODUIT | DevOS — Itérations v1.4 (FEATURE-AUTOMATIONS, Task 37) | Automatisations : Automation/AutomationRun (dédup dédiée, cœur ADR-002 inchangé), 2 déclencheurs (schedule HH:MM+jours, condition retards≥seuil), 4 endpoints + run manuel 409, vue ACTIVE complète | Équipe complète (CTO) | ✅ TERMINÉ | 100% | P1 | curl : 201 schedule, 400 validation croisée, run 200 puis 409 même seconde, détail+runs 200 · E2E tick : tâche en retard → annonce type automation parlée au tick#1, tick#2 = [] dédup prouvée · E2E UI : création dialog, test, historique (captures), suppression confirmée · mobile tiroir OK · lint 0 · tsc 0 | ✅ PASS · template uniquement (intégrité ADR-002) · purge artefacts 0/0/0 · 1 menu avancé activé |
+| TASK-023 | GOUVERNANCE | DevOS — Solde M3 hérité (AUDIT-005/006, Task 37) | 3 drifts documentaires soldés : TEAM_STATUS.md (en-tête + KPI + SAMEORIGIN→DENY), ARCHITECTURE.md §4 (modèle réel 10 tables), CHANGELOG (9→10 directives + entrée 0.6.0) | DOC (CTO) | ✅ TERMINÉ | 100% | P2 | rg verrou : 0 occurrence résiduelle des 3 motifs · faits recoupés avec AUDIT_REPORT/COMMIT_LOG | ✅ PASS · M3 soldé après 3 sessions |
 
 ## Règles de dépendance rappelées
 - Frontend bloqué tant que contrat API non validé (`API_CONTRACTS.md`)
@@ -45,4 +48,4 @@
 - Aucune tâche TERMINÉE sans : commits propres + revue positive ; frontend : + a11y + perf
 - Aucune livraison PROD sans audit global ≥ 60/100
 
-> Prochaine étape : **AUDIT-006** déclenché après TASK-020 (règle « audit après chaque feature ») ; itération suivante : historique IA persistant, mode mains libres, automatisations, Git/GitHub ; restant **avant toute exposition prod réelle** — DEBT-020 (purge des comptes de démonstration) + verrouillage accès direct :3000 hors passerelle ; dette : DEBT-017 (découpage settings-screen.tsx 632 l.), DEBT-018 (doc), DEBT-003 vague 2 ESLint.
+> Prochaine étape : **AUDIT-007** déclenché après TASK-021/022/023 (règle « audit après chaque feature ») ; itérations suivantes candidates : Git/GitHub/Terminal (vues planned restantes), sauvegardes, mode mains libres, renommage conversations en UI ; restant **avant toute exposition prod réelle** — DEBT-020 (purge des comptes de démonstration) + verrouillage accès direct :3000 hors passerelle ; dette : DEBT-017 (découpage settings-screen.tsx 632 l.), DEBT-018 (doc), DEBT-003 vague 2 ESLint.

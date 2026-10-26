@@ -568,3 +568,26 @@ Stage Summary:
 - **Score global AUDIT-006 : 81,3/100 (+0,9 vs AUDIT-005)** : archi 93, qualité 87, tests 32, doc 75, sécurité 88, a11y 88, perf 93, conformité 91, dette 80, santé 86
 - **Constats : 0 CRITIQUE · 0 MAJEUR · 5 MINEUR** (M1 COMMIT_LOG −2 — consigné ; M2 atomicité e296e22 — 3ᵉ occurrence, magnitude réduite ; M3 drifts doc hérités non soldés — 3ᵉ session ; M4 ref locale origin/main en retard ; M5 warnings Radix DialogContent préexistants)
 - **Verdict : ✅ AUTORISÉ** — TASK-020 conforme à la lettre à l'exigence CTO (w-full re-prouvé 1024/1664/375 px, barre compacte supprimée sans orphelin, tiroir seul re-prouvé, registre à source unique renforcé) ; 5 mineurs AUDIT-005 soldés et vérifiés (99c556f) ; dette inchangée 22 items (17 T / 2 EC / 1 R / 1 A / 1 O) ; conditions permanentes reportées (DEBT-020 purge + verrou :3000 + CSP nonce avant toute exposition prod réelle) ; **AUDIT-007 après la prochaine feature ou avant toute exposition prod réelle**
+
+---
+Task ID: 37
+Agent: ORCHESTRATEUR PRINCIPAL (CTO) — Équipe complète
+Task: Exigence CTO « enchaîne sur les itérations suivantes (historique IA persistant, automatisations et solde des 3 drifts documentaires M3) » — TASK-021/022/023, contrat API v1.4
+
+Work Log:
+- Lecture AVANT travail : worklog (Tasks 29→36), scheduler.ts (477 l. — cœur ADR-002), chat route, ai-chat-view, use-workspace, use-voice-assistant, permissions.ts, API_CONTRACTS v1.3, DEBT_REPORT (comptage réel 22/17), 3 docs driftés M3
+- API-First : API_CONTRACTS **v1.4** écrit AVANT tout code (5 endpoints conversations + 4 automations + extensions chat/tick documentées, règles transverses : UTC, template uniquement, cascades)
+- Prisma : +AiConversation, +AiMessage, +Automation, +AutomationRun (cascades user→…, index, @@unique(automationId,scheduledFor)) — db:push OK + serveur redémarré (leçon Task 33)
+- Décision d'architecture : automatisations via registre de dédup DÉDIÉ (taskId null ne peut pas réutiliser ReminderLog dont @@unique traiterait les NULL comme distincts en SQLite) — cœur du scheduler ADR-002 INCHANGÉ ; module evaluateAutomations fusionné en fin de tick ; jamais urgent (heures silencieuses respectées) ; messages template uniquement (intégrité)
+- Backend : conversations CRUD (Zod strict, 404 générique, limit 1..50) · chat persistant (conversationId vérifié 404 précoce, création implicite titre auto tronqué 60, persiste dernier user + réponse — historique JAMAIS réinjecté au-delà des 20 fournis) · automations CRUD (validation croisée superRefine, PATCH validé sur l'état FUTUR) + run manuel (idempotent à la seconde, catch P2002 EXCLUSIF — autres erreurs DB propagées)
+- Frontend : types étendus (AiConversationSummary, Automation, AutomationRun, AnnouncementType+« automation » côté client+serveur, TYPE_CONFIG assistant-panel — attrapé par tsc) · use-workspace +5 fonctions · ai-chat-view réécrite (liste conversations récentes, reprise, suppression, badge) · automations-view.tsx nouvelle (255 l., cartes/dialogs/historique/switch/confirm) · registre automations planned→active · dev-os-app câblé
+- TASK-023 : TEAM_STATUS.md réaligné (AUDIT-006 81,3, XFO DENY, CSP 10 directives, KPI 23 tâches) · ARCHITECTURE §4 modèle réel 10 tables (warning Post obsolète retiré) · CHANGELOG 9→10 directives + entrée [0.6.0-workspace-iterations]
+- Gates : lint exit 0 · tsc exit 0 (après complète TYPE_CONFIG automation)
+- curl : chat 200 + conversationId + auto-titre · chat #2 LLM réel prénom injecté · rename 200 · title vide 400 · inter-users 404 générique · 401 ×2 sans cookie · automations 201/400 (validation croisée)/run 200→409 même seconde/détail+runs 200 · tick fort : tâche en retard réelle + condition → tick#1 annonce type automation PARLÉE, tick#2 [] DÉDUP PROUVEE · purge artefacts 0/0/0
+- E2E UI (captures task37-*.png) : envoi message → 2 bulles + conversation listée titre auto · reload → conversation conservée → clic → 2 messages restaurés · création automatisation dialog (Lun-Ven 08:00 + message) → carte badge/switch/résumé · Tester → run manuel · Historique → run visible · suppression confirmée (automatisation + conversation) → listes vides · régression dashboard OK · mobile 375 tiroir → Automatisations fonctionnelle hasHScroll=false · 0 erreur console (2 warnings Radix préexistants)
+- Gouvernance : TASKS.xlsx TASK-021/022/023 (lignes 25-27, TOTAL 28 = 23 tâches, STATISTIQUES 5:27 — recalc success 0 err · validate passed) · TASKS.md 23/23 · API_CONTRACTS v1.4 · worklog
+
+Stage Summary:
+- **Itérations v1.4 livrées** : historique IA persistant (backlog Task 33 soldé), automatisations réelles (1ᵉʳ menu avancé activé — recommandation §6 respectée), M3 soldé après 3 sessions récurrentes
+- TASKS : **23/23 — 100 %** · Dette inchangée 22 items (17 TRAITÉ) · Backlogs tracés : Git/GitHub/Terminal, sauvegardes, renommage conversations UI, autres conditions d'automatisation
+- **AUDIT-007 déclenché** (règle) → Task 38

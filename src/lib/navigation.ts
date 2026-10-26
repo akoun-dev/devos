@@ -112,7 +112,7 @@ export const NAV_SECTIONS: NavSection[] = [
         label: 'Automatisations',
         description: 'Scénarios déclenchés selon conditions et horaires',
         icon: Workflow,
-        status: 'planned',
+        status: 'active',
       },
     ],
   },

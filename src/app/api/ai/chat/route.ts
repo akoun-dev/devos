@@ -10,13 +10,18 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 /**
- * POST /api/ai/chat — Assistant IA conversationnel (FEATURE-UI-SHELL).
+ * POST /api/ai/chat — Assistant IA conversationnel (FEATURE-UI-SHELL + v1.4).
  *
  * Sécurité (ROLES_PERMISSIONS.md §3) : l'assistant n'a AUCUN accès outillé aux
  * données en v1 — il ne voit que la conversation fournie. Le contexte produit
  * (nb de tâches/projets) est injecté côté serveur comme simple indice textuel.
  * Rate limiting : 10 requêtes / 5 min / IP (limiteur mémoire DEBT-021).
  * SDK z-ai-web-dev-sdk : BACKEND uniquement.
+ * v1.4 — PERSISTANCE : conversationId absent → conversation créée implicitement
+ * (titre auto = 1ᵉʳ message user tronqué) ; fourni → vérifié (404 générique),
+ * seuls le DERNIER message user et la réponse sont persistés (les précédents
+ * sont déjà en base). L'historique persisté n'est JAMAIS réinjecté au LLM
+ * au-delà des messages fournis par le client (cap 20 conservé).
  */
 
 const chatMessageSchema = z
@@ -31,8 +36,20 @@ const chatSchema = z
     messages: z.array(chatMessageSchema).min(1).max(20),
     /** Contexte choisi dans l'UI : influe sur le ton/le rôle système. */
     context: z.enum(["general", "dev", "planification"]).optional(),
+    /** Conversation cible (v1.4) — appartenance vérifiée, sinon 404 générique. */
+    conversationId: z.string().trim().min(1).max(64).optional(),
   })
   .strict();
+
+const DEFAULT_CONVERSATION_TITLE = "Nouvelle conversation";
+
+/** Titre auto : 1ᵉʳ message user tronqué à 60 caractères (1re ligne non vide). */
+function autoTitle(firstUserMessage: string | undefined): string | null {
+  const firstLine = (firstUserMessage ?? "").split("\n").find((line) => line.trim().length > 0);
+  const trimmed = firstLine?.trim() ?? "";
+  if (!trimmed) return null;
+  return trimmed.length > 60 ? `${trimmed.slice(0, 57)}…` : trimmed;
+}
 
 const CONTEXT_PROMPTS: Record<string, string> = {
   general:
@@ -64,6 +81,19 @@ export async function POST(request: NextRequest) {
     const parsed = chatSchema.safeParse(body);
     if (!parsed.success) {
       return errorResponse(`Requête invalide — ${zodErrorMessage(parsed.error)}`, 400);
+    }
+
+    // v1.4 — résolution de la conversation cible AVANT l'appel LLM (404 précoce).
+    let conversation: { id: string; title: string } | null = null;
+    if (parsed.data.conversationId) {
+      const existing = await db.aiConversation.findFirst({
+        where: { id: parsed.data.conversationId, userId: user.id },
+        select: { id: true, title: true },
+      });
+      if (!existing) {
+        return errorResponse("Conversation introuvable", 404);
+      }
+      conversation = existing;
     }
 
     // Indice de contexte produit (comptes uniquement — jamais de contenu privé injecté).
@@ -98,9 +128,52 @@ export async function POST(request: NextRequest) {
       return errorResponse("L'assistant IA n'a pas pu générer de réponse", 502);
     }
 
+    // v1.4 — persistance de la conversation (user + assistant) et titre auto.
+    const lastUserMessage = [...parsed.data.messages].reverse().find((m) => m.role === "user");
+    let conversationId: string;
+    if (conversation) {
+      if (lastUserMessage) {
+        await db.aiMessage.create({
+          data: { conversationId: conversation.id, role: "user", content: lastUserMessage.content },
+        });
+      }
+      await db.aiMessage.create({
+        data: { conversationId: conversation.id, role: "assistant", content },
+      });
+      if (lastUserMessage && conversation.title === DEFAULT_CONVERSATION_TITLE) {
+        const title = autoTitle(lastUserMessage.content);
+        if (title) {
+          await db.aiConversation.update({ where: { id: conversation.id }, data: { title } });
+        }
+      }
+      conversationId = conversation.id;
+    } else {
+      const created = await db.aiConversation.create({
+        data: {
+          userId: user.id,
+          context: parsed.data.context ?? "general",
+          ...(autoTitle(lastUserMessage?.content)
+            ? { title: autoTitle(lastUserMessage?.content) as string }
+            : {}),
+        },
+      });
+      await db.aiMessage.createMany({
+        data: parsed.data.messages.map((message) => ({
+          conversationId: created.id,
+          role: message.role,
+          content: message.content,
+        })),
+      });
+      await db.aiMessage.create({
+        data: { conversationId: created.id, role: "assistant", content },
+      });
+      conversationId = created.id;
+    }
+
     return NextResponse.json({
       message: { role: "assistant", content, at: new Date().toISOString() },
       remaining: verdict.remaining,
+      conversationId,
     });
   } catch (error) {
     console.error("[api/ai/chat] POST :", error);

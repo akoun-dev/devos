@@ -2,10 +2,21 @@
 
 Format : [Keep a Changelog](https://keepachangelog.com) — versions sémantiques.
 
+## [0.6.0-workspace-iterations] — 2026-10-26
+### Ajouté — Espace de travail + itérations (Tasks 33/35/37, contrat API v1.3 → v1.4, ADR-004)
+- **FEATURE-UI-SHELL (TASK-019)** : shell complet — sidebar 4 sections (16 destinations), permissions centralisées (`permissions.ts` + matrice ROLES_PERMISSIONS), 12 vues fonctionnelles sur données réelles ; +6 endpoints v1.3 (projects, notes, activity, ai/chat) ; +2 modèles Prisma (Project, Note) + Task.projectId
+- **TASK-020** : vues en pleine largeur (w-full) sur web ; navigation mobile réduite au tiroir (bottom-nav supprimée, registre `mobilePrimary` retiré) — amendement ADR-004 §4
+- **Historique IA persistant (TASK-021, v1.4)** : modèles `AiConversation`/`AiMessage` (cascade user), 5 endpoints `/api/ai/conversations` (liste/création/détail/renommage/suppression), `POST /api/ai/chat` persistant (`conversationId` optionnel, création implicite + titre auto = 1ᵉʳ message, 404 générique inter-users, cap 20 messages au LLM conservé) ; UI : liste des conversations récentes (reprise, suppression, compteur de messages)
+- **Automatisations (TASK-022, v1.4)** : modèles `Automation`/`AutomationRun` (@@unique(automationId,scheduledFor) — dédup dédiée, cœur ADR-002 INCHANGÉ), 4 endpoints `/api/automations` (CRUD + run manuel idempotent à la seconde, 409), déclencheurs « Horaire » (HH:MM UTC + jours + message personnalisé) et « Condition » (tâches en retard ≥ seuil, 1/jour max), évaluation dans le tick (module `automations.ts`, type d'annonce `"automation"`, jamais urgent, silencieux → run « expire ») ; vue dédiée ACTIVE (registre planned→active) avec création/édition/test/historique
+### Corrigé
+- Drifts documentaires M3 hérités (TASK-023) : TEAM_STATUS.md réaligné (AUDIT-006 81,3/100, XFO DENY, CSP 10 directives), ARCHITECTURE.md §4 (modèle de données réel 10 tables, warning Post obsolète retiré), CHANGELOG « 9 directives » → 10 + présente entrée
+### Gouvernance
+- Contrat API v1.4 (AUTHORITATIF) ; TASKS 23/23 ; AUDIT-007 déclenché après livraison (règle post-feature)
+
 ## [0.5.0-security-hardening] — 2026-10-25
 ### Ajouté — Durcissement sécurité pré-prod (Task 26, suite du plan d'action AUDIT-003)
 - **Rate limiting (DEBT-021)** : `src/lib/rate-limit.ts` — fenêtre fixe en mémoire process (pile local-cache, **0 middleware, 0 dépendance**, purge paresseuse au seuil 5 000 entrées, IP = 1ᵉʳ saut `x-forwarded-for` repli « local ») ; login **10 tentatives / 15 min / IP**, register **5 / heure / IP**, branché AVANT tout traitement ; réponse 429 uniforme `{ error }` + `Retry-After` (`rateLimitedResponse`) propagée telle quelle dans l'UI via `apiFetch`
-- **CSP (DEBT-013)** : 9 directives dans `next.config.ts` — `default-src 'self'`, `script-src 'self' 'unsafe-inline' 'unsafe-eval'` (bootstrap Next ; nonce exigerait un middleware — posture 0 middleware ADR-003, resserrage différé documenté), `style-src 'self' 'unsafe-inline'` (styles inline Radix/shadcn), `img/font/connect-src 'self'`, `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`, `frame-ancestors 'none'` ; X-Frame-Options SAMEORIGIN → **DENY** aligné
+- **CSP (DEBT-013)** : 10 directives dans `next.config.ts` — `default-src 'self'`, `script-src 'self' 'unsafe-inline' 'unsafe-eval'` (bootstrap Next ; nonce exigerait un middleware — posture 0 middleware ADR-003, resserrage différé documenté), `style-src 'self' 'unsafe-inline'` (styles inline Radix/shadcn), `img/font/connect-src 'self'`, `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`, `frame-ancestors 'none'` ; X-Frame-Options SAMEORIGIN → **DENY** aligné
 ### Revue
 - **REV-004 ✅ APPROUVÉE** (Agent Reviewer indépendant, Task 27) — cible : FEATURE-AUTH (`67897bf`) + fix seed (`efae4e6`) + durcissement (`88f334f`, `db13a8b`) ; **0 bloquant · 0 majeur · 4 mineurs tracés** : bypass XFF en accès direct :3000 hors passerelle (fiable via Caddy qui écrase XFF — verrouiller avant exposition), Map du limiteur non plafonnée si > 5 000 clés vivantes, mdp de démo en clair dans le seed (purge DEBT-020), AuthGate sans h1 (hérité AUDIT-003) ; règles produit vérifiées intactes post-scopage (AC-007, zéro rattrapage, intégrité IA, 404 générique inter-users)
 ### Gouvernance

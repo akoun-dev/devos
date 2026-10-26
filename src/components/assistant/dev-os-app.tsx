@@ -16,6 +16,7 @@ import { AppShell } from '@/components/shell/app-shell'
 import { ComingSoonView } from '@/components/shell/coming-soon-view'
 import { ActivityView } from '@/components/views/activity-view'
 import { AiChatView } from '@/components/views/ai-chat-view'
+import { AutomationsView } from '@/components/views/automations-view'
 import { DashboardView } from '@/components/views/dashboard-view'
 import { NotesView } from '@/components/views/notes-view'
 import { NotificationsView } from '@/components/views/notifications-view'
@@ -250,12 +251,20 @@ export function DevOSApp({ user, onLogout, onSessionExpired }: DevOSAppProps) {
         )
       case 'automations':
         return (
-          <ComingSoonView
-            viewId="automations"
-            label="Automatisations"
-            description="Déclencher des actions selon des conditions et horaires (scénarios prédéfinis)."
-            plannedViews={['Mes automatisations', 'Créer', 'Historique des exécutions']}
-            actions={['Créer un scénario (déclencheur → condition → action)', 'Exécution par le scheduler existant', 'Confirmations pour les actions sensibles']}
+          <AutomationsView
+            automations={workspace.automations}
+            automationsLoading={workspace.automationsLoading}
+            onCreate={async (payload) => {
+              await workspace.createAutomation(payload)
+            }}
+            onUpdate={async (id, payload) => {
+              await workspace.updateAutomation(id, payload)
+            }}
+            onDelete={async (id) => {
+              await workspace.deleteAutomation(id)
+            }}
+            onRun={workspace.runAutomation}
+            onFetchRuns={workspace.fetchAutomationRuns}
           />
         )
       case 'git':

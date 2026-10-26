@@ -1,14 +1,16 @@
 'use client'
 
 /**
- * AiChatView — Assistant IA (cahier des charges §3.3) : conversation textuelle
- * avec contextes (Général / Développement / Planification), état du modèle,
- * nouvelle conversation. Backend : POST /api/ai/chat (SDK serveur, rate limit
- * 10/5 min). Historique : session courante (persistance DB en backlog).
+ * AiChatView — Assistant IA (cahier des charges §3.3 + contrat v1.4) :
+ * conversation textuelle avec contextes (Général / Développement / Planification),
+ * **historique persistant** (conversations en base — GET/PATCH/DELETE
+ * /api/ai/conversations, POST /api/ai/chat avec conversationId), état du modèle,
+ * nouvelle conversation. Rate limit serveur : 10/5 min (remaining affiché).
+ * SDK z-ai-web-dev-sdk : BACKEND uniquement (aucun appel direct client).
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Bot, Loader2, RotateCcw, Send, Sparkles } from 'lucide-react'
+import { Bot, History, Loader2, MessageSquare, RotateCcw, Send, Sparkles, Trash2 } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -19,7 +21,7 @@ import { useToast } from '@/hooks/use-toast'
 import { ApiError, apiFetch } from '@/lib/assistant/api'
 import { formatTimeFR } from '@/lib/assistant/format'
 import { cn } from '@/lib/utils'
-import type { AiChatResponse, ChatMessage } from '@/types/workspace'
+import type { AiChatResponse, AiConversationSummary, ChatMessage } from '@/types/workspace'
 
 type ChatContext = 'general' | 'dev' | 'planification'
 
@@ -48,11 +50,83 @@ export function AiChatView({ onUnauthorized }: AiChatViewProps) {
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
   const [remaining, setRemaining] = useState<number | null>(null)
+  const [conversations, setConversations] = useState<AiConversationSummary[]>([])
+  const [conversationsLoading, setConversationsLoading] = useState(true)
+  const [conversationId, setConversationId] = useState<string | null>(null)
+  const [conversationTitle, setConversationTitle] = useState<string | null>(null)
+  const [openingConversation, setOpeningConversation] = useState(false)
   const listRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' })
   }, [messages, sending])
+
+  const refreshConversations = useCallback(async () => {
+    try {
+      const data = await apiFetch<{ conversations: AiConversationSummary[] }>('/api/ai/conversations?limit=30')
+      setConversations(data.conversations)
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) onUnauthorized()
+    } finally {
+      setConversationsLoading(false)
+    }
+  }, [onUnauthorized])
+
+  useEffect(() => {
+    void refreshConversations()
+  }, [refreshConversations])
+
+  const resetConversation = useCallback(() => {
+    setConversationId(null)
+    setConversationTitle(null)
+    setMessages([])
+  }, [])
+
+  const openConversation = useCallback(
+    async (id: string) => {
+      if (openingConversation || id === conversationId) return
+      setOpeningConversation(true)
+      try {
+        const data = await apiFetch<{
+          conversation: AiConversationSummary
+          messages: { id: string; role: 'user' | 'assistant'; content: string; createdAt: string }[]
+        }>(`/api/ai/conversations/${id}`)
+        setConversationId(data.conversation.id)
+        setConversationTitle(data.conversation.title)
+        setContext((data.conversation.context as ChatContext) ?? 'general')
+        setMessages(data.messages.map((message) => ({ role: message.role, content: message.content, at: message.createdAt })))
+      } catch (error) {
+        if (error instanceof ApiError && error.status === 401) onUnauthorized()
+        toast({
+          title: 'Conversation indisponible',
+          description: error instanceof Error ? error.message : undefined,
+          variant: 'destructive',
+        })
+      } finally {
+        setOpeningConversation(false)
+      }
+    },
+    [conversationId, openingConversation, onUnauthorized, toast],
+  )
+
+  const deleteConversation = useCallback(
+    async (id: string) => {
+      try {
+        await apiFetch<{ ok: boolean }>(`/api/ai/conversations/${id}`, { method: 'DELETE' })
+        if (id === conversationId) resetConversation()
+        await refreshConversations()
+        toast({ title: 'Conversation supprimée' })
+      } catch (error) {
+        if (error instanceof ApiError && error.status === 401) onUnauthorized()
+        toast({
+          title: 'Suppression impossible',
+          description: error instanceof Error ? error.message : undefined,
+          variant: 'destructive',
+        })
+      }
+    },
+    [conversationId, onUnauthorized, refreshConversations, resetConversation, toast],
+  )
 
   const send = useCallback(
     async (text: string) => {
@@ -69,10 +143,15 @@ export function AiChatView({ onUnauthorized }: AiChatViewProps) {
           body: JSON.stringify({
             messages: history.slice(-MAX_MESSAGES).map((message) => ({ role: message.role, content: message.content })),
             context,
+            ...(conversationId ? { conversationId } : {}),
           }),
         })
         setMessages((prev) => [...prev, data.message])
         setRemaining(data.remaining)
+        if (data.conversationId && data.conversationId !== conversationId) {
+          setConversationId(data.conversationId)
+        }
+        await refreshConversations()
       } catch (error) {
         if (error instanceof ApiError && error.status === 401) onUnauthorized()
         toast({
@@ -84,7 +163,7 @@ export function AiChatView({ onUnauthorized }: AiChatViewProps) {
         setSending(false)
       }
     },
-    [messages, sending, context, toast, onUnauthorized]
+    [messages, sending, context, conversationId, refreshConversations, toast, onUnauthorized],
   )
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -94,6 +173,7 @@ export function AiChatView({ onUnauthorized }: AiChatViewProps) {
 
   return (
     <div className="flex flex-col gap-4">
+      {/* Historique persistant (contrat v1.4) */}
       <Card>
         <CardHeader className="pb-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
@@ -101,17 +181,14 @@ export function AiChatView({ onUnauthorized }: AiChatViewProps) {
               <Bot className="size-4 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
               Assistant IA
               <Badge variant="secondary" className="text-[10px]">
-                Modèle serveur
+                Historique enregistré
               </Badge>
             </CardTitle>
             <Button
               variant="outline"
               size="sm"
               className="min-h-11 sm:min-h-9"
-              onClick={() => {
-                setMessages([])
-                setRemaining(null)
-              }}
+              onClick={resetConversation}
               disabled={messages.length === 0 || sending}
             >
               <RotateCcw aria-hidden="true" />
@@ -120,7 +197,7 @@ export function AiChatView({ onUnauthorized }: AiChatViewProps) {
           </div>
           <CardDescription>
             Conversations et analyses — l&apos;IA ne modifie pas vos données : elle vous propose des
-            actions à appliquer vous-même.
+            actions à appliquer vous-même. Vos conversations sont conservées.
             {remaining !== null ? ` Requêtes restantes : ${remaining}.` : ''}
           </CardDescription>
         </CardHeader>
@@ -140,14 +217,73 @@ export function AiChatView({ onUnauthorized }: AiChatViewProps) {
               </SelectContent>
             </Select>
           </div>
+
+          <div>
+            <p className="flex items-center gap-1.5 pb-1 text-xs font-medium text-muted-foreground">
+              <History className="size-3.5" aria-hidden="true" />
+              Conversations récentes
+            </p>
+            {conversationsLoading ? (
+              <div className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm text-muted-foreground">
+                <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+                Chargement de l&apos;historique…
+              </div>
+            ) : conversations.length === 0 ? (
+              <p className="rounded-lg border border-dashed px-3 py-2 text-sm text-muted-foreground">
+                Aucune conversation enregistrée — votre premier échange apparaîtra ici.
+              </p>
+            ) : (
+              <ul className="devos-scroll max-h-44 space-y-1 overflow-y-auto pr-1">
+                {conversations.map((conversation) => {
+                  const isCurrent = conversation.id === conversationId
+                  return (
+                    <li key={conversation.id} className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => void openConversation(conversation.id)}
+                        aria-current={isCurrent ? 'true' : undefined}
+                        className={cn(
+                          'group flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-lg border px-3 py-1.5 text-left text-sm transition-colors',
+                          isCurrent
+                            ? 'border-primary/40 bg-primary/10 text-primary'
+                            : 'hover:bg-muted',
+                        )}
+                      >
+                        <MessageSquare className="size-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
+                        <span className="min-w-0 flex-1 truncate">{conversation.title}</span>
+                        <span className="shrink-0 text-[11px] text-muted-foreground">
+                          {conversation.messageCount} msg · {formatTimeFR(conversation.updatedAt)}
+                        </span>
+                      </button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-9 shrink-0 text-muted-foreground hover:text-destructive"
+                        onClick={() => void deleteConversation(conversation.id)}
+                        disabled={sending}
+                        aria-label={`Supprimer la conversation « ${conversation.title} »`}
+                      >
+                        <Trash2 className="size-4" aria-hidden="true" />
+                      </Button>
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
+          </div>
         </CardContent>
       </Card>
 
-      {/* Conversation */}
+      {/* Conversation courante */}
       <Card className="flex min-h-[50dvh] flex-col">
         <CardContent className="flex flex-1 flex-col gap-3 p-4">
+          {conversationTitle ? (
+            <p className="truncate text-xs font-medium text-muted-foreground" aria-live="polite">
+              {openingConversation ? 'Chargement…' : `Conversation : ${conversationTitle}`}
+            </p>
+          ) : null}
           <div ref={listRef} className="devos-scroll flex-1 space-y-3 overflow-y-auto pr-1" aria-live="polite" aria-label="Conversation">
-            {messages.length === 0 && !sending ? (
+            {messages.length === 0 && !sending && !openingConversation ? (
               <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
                 <Sparkles className="size-8 text-muted-foreground" aria-hidden="true" />
                 <p className="text-sm text-muted-foreground">
@@ -179,7 +315,7 @@ export function AiChatView({ onUnauthorized }: AiChatViewProps) {
                     'max-w-[85%] whitespace-pre-wrap rounded-lg px-3 py-2 text-sm sm:max-w-[75%]',
                     message.role === 'user'
                       ? 'bg-primary text-primary-foreground'
-                      : 'border bg-muted/50 text-foreground'
+                      : 'border bg-muted/50 text-foreground',
                   )}
                 >
                   {message.content}

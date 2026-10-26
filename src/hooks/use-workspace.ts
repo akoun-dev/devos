@@ -1,16 +1,23 @@
 'use client'
 
 /**
- * use-workspace — données de l'espace de travail (FEATURE-UI-SHELL).
- * Charge projets, notes et journal d'activité (GET) et expose les mutateurs
- * (créer / mettre à jour / supprimer) avec rafraîchissement local.
+ * use-workspace — données de l'espace de travail (FEATURE-UI-SHELL + v1.4).
+ * Charge projets, notes, journal d'activité et automatisations (GET) et expose
+ * les mutateurs (créer / mettre à jour / supprimer / exécuter) avec
+ * rafraîchissement local.
  * Fetch relatif UNIQUEMENT via apiFetch (erreurs { error } uniformes).
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { ApiError, apiFetch } from '@/lib/assistant/api'
-import type { ActivityEntry, Note, Project } from '@/types/workspace'
+import type {
+  ActivityEntry,
+  Automation,
+  AutomationRun,
+  Note,
+  Project,
+} from '@/types/workspace'
 
 export function useWorkspace(onUnauthorized?: () => void) {
   const [projects, setProjects] = useState<Project[]>([])
@@ -19,6 +26,8 @@ export function useWorkspace(onUnauthorized?: () => void) {
   const [notesLoading, setNotesLoading] = useState(true)
   const [activity, setActivity] = useState<ActivityEntry[]>([])
   const [activityLoading, setActivityLoading] = useState(true)
+  const [automations, setAutomations] = useState<Automation[]>([])
+  const [automationsLoading, setAutomationsLoading] = useState(true)
 
   /** 401 → notifie le parent une seule fois (session expirée) — ref stable entre rendus. */
   const unauthorizedRef = useRef(onUnauthorized)
@@ -59,11 +68,21 @@ export function useWorkspace(onUnauthorized?: () => void) {
     }
   }, [])
 
+  const refreshAutomations = useCallback(async () => {
+    try {
+      const data = await apiFetch<{ automations: Automation[] }>('/api/automations')
+      setAutomations(data.automations)
+    } finally {
+      setAutomationsLoading(false)
+    }
+  }, [])
+
   useEffect(() => {
     void refreshProjects().catch(() => setProjectsLoading(false))
     void refreshNotes().catch(() => setNotesLoading(false))
     void refreshActivity().catch(() => setActivityLoading(false))
-  }, [refreshProjects, refreshNotes, refreshActivity])
+    void refreshAutomations().catch(() => setAutomationsLoading(false))
+  }, [refreshProjects, refreshNotes, refreshActivity, refreshAutomations])
 
   const createProject = useCallback(
     async (payload: {
@@ -156,8 +175,89 @@ export function useWorkspace(onUnauthorized?: () => void) {
   )
 
   const refreshAll = useCallback(async () => {
-    await Promise.all([refreshProjects(), refreshNotes(), refreshActivity()])
-  }, [refreshProjects, refreshNotes, refreshActivity])
+    await Promise.all([refreshProjects(), refreshNotes(), refreshActivity(), refreshAutomations()])
+  }, [refreshProjects, refreshNotes, refreshActivity, refreshAutomations])
+
+  // ─── Automatisations (contrat v1.4) ───
+
+  const createAutomation = useCallback(
+    async (payload: {
+      name: string
+      triggerType: 'schedule' | 'condition'
+      scheduleTime?: string
+      scheduleDays?: string
+      conditionType?: 'overdue_count'
+      threshold?: number
+      message?: string
+    }) => {
+      try {
+        const data = await apiFetch<{ automation: Automation }>('/api/automations', {
+          method: 'POST',
+          body: JSON.stringify(payload),
+        })
+        await refreshAutomations()
+        return data.automation
+      } catch (error) {
+        return guard(error)
+      }
+    },
+    [refreshAutomations, guard],
+  )
+
+  const updateAutomation = useCallback(
+    async (id: string, payload: Partial<Omit<Automation, 'id' | 'createdAt' | 'updatedAt' | 'lastRunAt'>>) => {
+      try {
+        await apiFetch<{ automation: Automation }>(`/api/automations/${id}`, {
+          method: 'PATCH',
+          body: JSON.stringify(payload),
+        })
+        await refreshAutomations()
+      } catch (error) {
+        guard(error)
+      }
+    },
+    [refreshAutomations, guard],
+  )
+
+  const deleteAutomation = useCallback(
+    async (id: string) => {
+      try {
+        await apiFetch<{ ok: boolean }>(`/api/automations/${id}`, { method: 'DELETE' })
+        await refreshAutomations()
+      } catch (error) {
+        guard(error)
+      }
+    },
+    [refreshAutomations, guard],
+  )
+
+  const runAutomation = useCallback(
+    async (id: string): Promise<AutomationRun | null> => {
+      try {
+        const data = await apiFetch<{ run: AutomationRun }>(`/api/automations/${id}/run`, {
+          method: 'POST',
+        })
+        await refreshAutomations()
+        return data.run
+      } catch (error) {
+        return guard(error)
+      }
+    },
+    [refreshAutomations, guard],
+  )
+
+  const fetchAutomationRuns = useCallback(
+    async (id: string): Promise<{ automation: Automation; runs: AutomationRun[] } | null> => {
+      try {
+        return await apiFetch<{ automation: Automation; runs: AutomationRun[] }>(
+          `/api/automations/${id}`,
+        )
+      } catch (error) {
+        return guard(error)
+      }
+    },
+    [guard],
+  )
 
   return {
     projects,
@@ -166,9 +266,12 @@ export function useWorkspace(onUnauthorized?: () => void) {
     notesLoading,
     activity,
     activityLoading,
+    automations,
+    automationsLoading,
     refreshProjects,
     refreshNotes,
     refreshActivity,
+    refreshAutomations,
     refreshAll,
     createProject,
     updateProject,
@@ -176,5 +279,10 @@ export function useWorkspace(onUnauthorized?: () => void) {
     createNote,
     updateNote,
     deleteNote,
+    createAutomation,
+    updateAutomation,
+    deleteAutomation,
+    runAutomation,
+    fetchAutomationRuns,
   }
 }

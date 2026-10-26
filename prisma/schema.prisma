@@ -22,6 +22,8 @@ model User {
   voicePreferences VoicePreferences[]
   projects         Project[]
   notes            Note[]
+  aiConversations  AiConversation[]
+  automations      Automation[]
 }
 
 model Post {
@@ -136,4 +138,69 @@ model ReminderLog {
   task          Task?     @relation(fields: [taskId], references: [id], onDelete: Cascade)
 
   @@unique([taskId, type, scheduledFor])
+}
+
+// ─── FEATURE-AI-HISTORY « Historique IA persistant » (contrat API v1.4 — .ai/API_CONTRACTS.md) ───
+
+model AiConversation {
+  id        String      @id @default(cuid())
+  title     String      @default("Nouvelle conversation")
+  context   String      @default("general")
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages  AiMessage[]
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@index([userId, updatedAt])
+}
+
+model AiMessage {
+  id             String         @id @default(cuid())
+  conversationId String
+  conversation   AiConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           String
+  content        String
+  createdAt      DateTime       @default(now())
+
+  @@index([conversationId, createdAt])
+}
+
+// ─── FEATURE-AUTOMATIONS « Automatisations » (contrat API v1.4 — .ai/API_CONTRACTS.md) ───
+
+model Automation {
+  id            String          @id @default(cuid())
+  name          String
+  enabled       Boolean         @default(true)
+  triggerType   String
+  scheduleTime  String?
+  scheduleDays  String          @default("1,2,3,4,5")
+  conditionType String?
+  threshold     Int?
+  message       String?
+  lastRunAt     DateTime?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  userId        String
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  runs          AutomationRun[]
+
+  @@index([userId])
+}
+
+model AutomationRun {
+  id            String     @id @default(cuid())
+  automationId  String
+  automation    Automation @relation(fields: [automationId], references: [id], onDelete: Cascade)
+  userId        String
+  trigger       String
+  scheduledFor  DateTime
+  status        String     @default("annonce")
+  firedAt       DateTime?
+  message       String?
+  messageSource String?
+  createdAt     DateTime   @default(now())
+
+  @@unique([automationId, scheduledFor])
+  @@index([userId, createdAt])
 }

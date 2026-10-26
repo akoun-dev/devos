@@ -7,7 +7,12 @@
  * message, avec fallback systématique sur le template.
  */
 
-export type AnnouncementType = "reminder" | "new_task" | "deadline" | "priority";
+/**
+ * types d'annonce. v1.4 : « automation » (FEATURE-AUTOMATIONS) — construit
+ * directement dans automations.ts (message personnalisé ou template dédié),
+ * JAMAIS via buildTemplateMessage (pas de tâche associée).
+ */
+export type AnnouncementType = "reminder" | "new_task" | "deadline" | "priority" | "automation";
 export type AssistantStyle = "naturel" | "professionnel" | "bref";
 
 export interface TemplateFacts {

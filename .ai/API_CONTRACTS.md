@@ -260,6 +260,110 @@ comptes (tâches en cours / projets actifs) est injecté côté serveur ; pas de
 - `POST /api/tasks` et `PATCH /api/tasks/[id]` : acceptent désormais `projectId?: string|null`
   (projet vérifié côté serveur) ; sérialisation Task enrichie de `projectId` + `projectName`.
 
+## ✅ Contrats v1.4 — « Historique IA persistant + Automatisations » (Task 37 — AUTHORITATIF)
+
+Règles transverses v1.4 : scoping strict `userId` (conversations IA, automatisations, runs) ·
+404 générique inter-utilisateurs · suppression en cascade (user → conversations → messages ;
+user → automatisations → runs) · messages IA : SDK **serveur uniquement** (inchangé) ·
+rate limit chat inchangé (10/5 min/IP) · automatisations : messages **template uniquement**
+v1 (aucune invention LLM — règle d'intégrité ADR-002) · horaires interprétés en **UTC**
+(fuseau serveur Africa/Abidjan).
+
+### GET /api/ai/conversations
+Description: liste des conversations IA de l'utilisateur
+Auth: session
+Query: limit? = 1..50 (défaut 30)
+Response 200: { conversations: AiConversationSummary[] }
+  # AiConversationSummary = { id, title, context, messageCount, createdAt, updatedAt } — tri updatedAt desc
+Erreurs: 400 | 401 | 500: { error }
+
+### POST /api/ai/conversations
+Description: création d'une conversation vide
+Auth: session
+Request: { title?: string(1..160); context?: general|dev|planification }
+Response 201: { conversation: AiConversationSummary }
+Erreurs: 400 | 401 | 500: { error }
+
+### GET /api/ai/conversations/[id]
+Description: détail d'une conversation + messages (tri createdAt asc, tous)
+Auth: session
+Response 200: { conversation: AiConversationSummary; messages: { id; role: user|assistant; content; createdAt: ISO }[] }
+Erreurs: 400 | 401 | 404 (générique inter-users) | 500: { error }
+
+### PATCH /api/ai/conversations/[id]
+Description: renommage
+Auth: session
+Request: { title: string(1..160) }
+Response 200: { conversation: AiConversationSummary }
+Erreurs: 400 | 401 | 404 | 500: { error }
+
+### DELETE /api/ai/conversations/[id]
+Description: suppression (messages en cascade)
+Auth: session
+Response 200: { ok: true }
+Erreurs: 401 | 404 | 500: { error }
+
+### POST /api/ai/chat  *(v1.3 → v1.4 : extension additive)*
+Description: Assistant IA — **persistance automatique** dans une conversation
+Auth: session
+Rate limit: 10 requêtes / 5 min / IP (inchangé)
+Request: { messages: { role; content }[1..20]; context?: general|dev|planification;
+           conversationId?: string }
+  # conversationId absent → conversation créée implicitement (titre auto = 1ᵉʳ message user tronqué 60)
+  # conversationId fourni → doit appartenir à l'utilisateur (sinon 404) ; seuls le DERNIER
+  # message user fourni et la réponse sont persistés (les précédents sont déjà en base)
+Response 200: { message: { role: "assistant"; content; at }; remaining: number|null;
+                conversationId: string }   # + champ conversationId (NOUVEAU)
+Erreurs: 400 | 401 | 404 | 429 | 500 | 502: { error }
+Intégrité: aucun accès outillé aux données (inchangé) ; le contexte système reste un indice
+de comptes ; l'historique persisté n'est JAMAIS réinjecté au LLM au-delà des messages fournis
+par le client (cap 20 conservé).
+
+### GET /api/automations
+Description: liste des automatisations de l'utilisateur
+Auth: session
+Response 200: { automations: Automation[] }
+  # Automation = { id, name, enabled, triggerType: schedule|condition, scheduleTime: "HH:MM"|null,
+  #   scheduleDays: "0..6 CSV", conditionType: "overdue_count"|null, threshold: number|null,
+  #   message: string|null, lastRunAt: ISO|null, createdAt, updatedAt } — tri updatedAt desc
+Erreurs: 401 | 500: { error }
+
+### POST /api/automations
+Description: création d'une automatisation (validation croisée selon triggerType)
+Auth: session
+Request: { name: string(1..80); triggerType: "schedule"|"condition";
+           scheduleTime?: "^([01]\d|2[0-3]):[0-5]\d$" (requis si schedule);
+           scheduleDays?: CSV jours 0..6 (0=dimanche, défaut "1,2,3,4,5");
+           conditionType?: "overdue_count" (requis si condition);
+           threshold?: int 1..99 (requis si condition);
+           message?: string(0..500) (schedule uniquement, optionnel) }
+Response 201: { automation: Automation }
+Erreurs: 400 | 401 | 500: { error }
+
+### GET | PATCH | DELETE /api/automations/[id]
+Description: détail (+ 10 derniers runs) / mise à jour partielle (toggle enabled, renommage,
+             modification du déclencheur) / suppression (runs en cascade)
+Auth: session
+Response 200: { automation: Automation; runs: AutomationRun[] } | PATCH: { automation: Automation } | DELETE: { ok: true }
+  # AutomationRun = { id, trigger: schedule|condition|manuel, scheduledFor, status: annonce|expire,
+  #   firedAt: ISO|null, message: string|null, messageSource, createdAt }
+Erreurs: 400 | 401 | 404 (générique inter-users) | 500: { error }
+
+### POST /api/automations/[id]/run
+Description: exécution manuelle immédiate (trigger "manuel") — génère l'annonce template,
+             crée un run (idempotent à la seconde, 409 si double-clic < 1 s) et met à jour lastRunAt
+Auth: session
+Request: —
+Response 200: { run: AutomationRun }
+Erreurs: 401 | 404 | 409 (run < 1 s) | 500: { error }
+
+### Modification v1.3 → v1.4 des endpoints existants
+- `POST /api/assistant/tick` : évalue AUSSI les automatisations actives de l'utilisateur
+  (module `evaluateAutomations`, après le scheduler ADR-002 — cœur du tick inchangé) ;
+  les annonces d'automatisation apparaissent dans `announcements[]` avec
+  `type: "automation"`, `taskId: null`, `title` = nom de l'automatisation.
+- `AnnouncementType` étendu : `"reminder" | "new_task" | "deadline" | "priority" | "automation"`.
+
 ## 🗄️ Contrats archivés
 
 ### `GET /api` — Endpoint de santé démo scaffold → **remplacé par `GET /api/health`** (DEBT-002, 2026-10-25)
@@ -270,3 +374,4 @@ comptes (tâches en cours / projets actifs) est injecté côté serveur ; pas de
 - 2026-10-25 : v1 FEATURE-001 (7 endpoints) ; v1.1 FEATURE-AUTH (Task 22) — 4 endpoints auth + passage des 9 endpoints métier en `Auth: session` + types AuthUser/scopage (ADR-003).
 - 2026-10-26 : v1.2 (AUDIT-004 M3) — 429 + Retry-After documentés sur register/login.
 - 2026-10-26 : v1.3 FEATURE-UI-SHELL (Task 33) — 6 nouveaux endpoints (projects, notes, activity, ai/chat) + projectId sur tasks ; types Project/Note/ActivityEntry/AiChatResponse (ADR-004).
+- 2026-10-26 : v1.4 « Historique IA persistant + Automatisations » (Task 37) — 5 endpoints conversations + 4 endpoints automations (dont run manuel) + chat persistant (conversationId) + tick étendu aux automatisations (type "automation") ; vues ui-shell : historique IA + vue Automatisations ACTIVE (registre planned→active).

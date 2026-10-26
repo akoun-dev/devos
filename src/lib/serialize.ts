@@ -4,7 +4,17 @@
  * aucun champ en trop.
  */
 
-import type { Note, Project, ReminderLog, Task, VoicePreferences } from "@prisma/client";
+import type {
+  AiConversation,
+  AiMessage,
+  Automation,
+  AutomationRun,
+  Note,
+  Project,
+  ReminderLog,
+  Task,
+  VoicePreferences,
+} from "@prisma/client";
 
 export function serializeTask(task: Task & { project?: { name: string } | null }) {
   return {
@@ -92,5 +102,61 @@ export function serializeLog(log: ReminderLog) {
     message: log.message,
     messageSource: log.messageSource,
     createdAt: log.createdAt.toISOString(),
+  };
+}
+
+// ─── Contrat v1.4 — conversations IA ─────────────────────────────────────────
+
+export function serializeAiConversation(
+  conversation: AiConversation & { _count?: { messages: number } },
+) {
+  return {
+    id: conversation.id,
+    title: conversation.title,
+    context: conversation.context,
+    messageCount: conversation._count?.messages ?? 0,
+    createdAt: conversation.createdAt.toISOString(),
+    updatedAt: conversation.updatedAt.toISOString(),
+  };
+}
+
+export function serializeAiMessage(message: AiMessage) {
+  return {
+    id: message.id,
+    role: message.role,
+    content: message.content,
+    createdAt: message.createdAt.toISOString(),
+  };
+}
+
+// ─── Contrat v1.4 — automatisations ──────────────────────────────────────────
+
+export function serializeAutomation(automation: Automation) {
+  return {
+    id: automation.id,
+    name: automation.name,
+    enabled: automation.enabled,
+    triggerType: automation.triggerType,
+    scheduleTime: automation.scheduleTime,
+    scheduleDays: automation.scheduleDays,
+    conditionType: automation.conditionType,
+    threshold: automation.threshold,
+    message: automation.message,
+    lastRunAt: automation.lastRunAt ? automation.lastRunAt.toISOString() : null,
+    createdAt: automation.createdAt.toISOString(),
+    updatedAt: automation.updatedAt.toISOString(),
+  };
+}
+
+export function serializeAutomationRun(run: AutomationRun) {
+  return {
+    id: run.id,
+    trigger: run.trigger,
+    scheduledFor: run.scheduledFor.toISOString(),
+    status: run.status,
+    firedAt: run.firedAt ? run.firedAt.toISOString() : null,
+    message: run.message,
+    messageSource: run.messageSource,
+    createdAt: run.createdAt.toISOString(),
   };
 }

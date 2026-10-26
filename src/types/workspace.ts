@@ -99,6 +99,51 @@ export interface ChatMessage {
 export interface AiChatResponse {
   message: ChatMessage
   remaining: number | null
+  /** Conversation persistée (contrat v1.4). */
+  conversationId: string
+}
+
+/** Résumé de conversation IA (contrat v1.4). */
+export interface AiConversationSummary {
+  id: string
+  title: string
+  context: string
+  messageCount: number
+  createdAt: string
+  updatedAt: string
+}
+
+// ─── Automatisations (contrat v1.4) ───
+
+export type AutomationTriggerType = 'schedule' | 'condition'
+export type AutomationRunTrigger = 'schedule' | 'condition' | 'manuel'
+
+/** Automatisation DevOS. */
+export interface Automation {
+  id: string
+  name: string
+  enabled: boolean
+  triggerType: AutomationTriggerType
+  scheduleTime: string | null
+  scheduleDays: string
+  conditionType: 'overdue_count' | null
+  threshold: number | null
+  message: string | null
+  lastRunAt: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+/** Exécution d'une automatisation. */
+export interface AutomationRun {
+  id: string
+  trigger: AutomationRunTrigger
+  scheduledFor: string
+  status: string
+  firedAt: string | null
+  message: string | null
+  messageSource: string | null
+  createdAt: string
 }
 
 // ─── Système ───

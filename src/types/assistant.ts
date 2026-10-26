@@ -6,7 +6,7 @@
 
 export type TaskPriority = 'basse' | 'normale' | 'haute' | 'urgente'
 export type TaskStatus = 'en_cours' | 'terminee' | 'annulee'
-export type AnnouncementType = 'reminder' | 'new_task' | 'deadline' | 'priority'
+export type AnnouncementType = 'reminder' | 'new_task' | 'deadline' | 'priority' | 'automation'
 export type MessageSource = 'ia' | 'template'
 export type VoiceStyle = 'naturel' | 'professionnel' | 'bref'
 
