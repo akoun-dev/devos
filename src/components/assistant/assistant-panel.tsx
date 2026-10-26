@@ -59,7 +59,7 @@ const TYPE_CONFIG: Record<
   reminder: {
     label: 'Rappel',
     className:
-      'border-zinc-300 bg-zinc-100 text-zinc-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300',
+      'border-slate-600 bg-slate-800/70 text-slate-200',
   },
   new_task: {
     label: 'Nouvelle tâche',
@@ -68,7 +68,7 @@ const TYPE_CONFIG: Record<
   deadline: {
     label: 'Échéance',
     className:
-      'border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300',
+      'border-amber-400/30 bg-amber-400/10 text-amber-200',
   },
   priority: {
     label: 'Priorité',
@@ -78,7 +78,7 @@ const TYPE_CONFIG: Record<
   automation: {
     label: 'Automatisation',
     className:
-      'border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300',
+      'border-emerald-400/30 bg-emerald-400/10 text-emerald-200',
   },
 }
 
@@ -124,8 +124,8 @@ export function AssistantPanel({
   return (
     <div className="flex flex-col gap-4">
       {/* Carte de statut */}
-      <Card>
-        <CardHeader className="pb-3">
+      <Card className="overflow-hidden border-slate-700/80 bg-[#0b2038]/90">
+        <CardHeader className="border-b border-slate-700/70 bg-gradient-to-r from-indigo-500/[0.07] to-transparent pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
             <Volume2 className="size-4" aria-hidden="true" />
             État de l&apos;assistant
@@ -175,15 +175,15 @@ export function AssistantPanel({
           className={cn(
             'flex flex-col gap-3 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between',
             permission === 'denied'
-              ? 'border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-950'
-              : 'border-emerald-300 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950',
+              ? 'border-amber-400/30 bg-amber-400/10'
+              : 'border-emerald-400/30 bg-emerald-400/10',
           )}
         >
           <div className="flex items-start gap-3">
             {permission === 'denied' ? (
-              <BellOff className="mt-0.5 size-5 shrink-0 text-amber-700 dark:text-amber-300" aria-hidden="true" />
+              <BellOff className="mt-0.5 size-5 shrink-0 text-amber-300" aria-hidden="true" />
             ) : (
-              <BellRing className="mt-0.5 size-5 shrink-0 text-emerald-700 dark:text-emerald-300" aria-hidden="true" />
+              <BellRing className="mt-0.5 size-5 shrink-0 text-emerald-300" aria-hidden="true" />
             )}
             <div className="text-sm">
               <p className="font-medium text-foreground">
@@ -221,7 +221,7 @@ export function AssistantPanel({
         </CardHeader>
         <CardContent>
           {announcements.length === 0 ? (
-            <p className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
+            <p className="rounded-xl border border-dashed border-slate-600/80 bg-slate-900/20 p-6 text-center text-sm text-slate-400">
               Aucune annonce pour le moment. Les rappels, nouvelles tâches, échéances et priorités
               apparaîtront ici.
             </p>
@@ -235,7 +235,7 @@ export function AssistantPanel({
               {announcements.map(({ announcement, receivedAt }) => (
                 <li
                   key={announcement.id}
-                  className="rounded-lg border bg-card p-3 shadow-xs"
+                  className="rounded-xl border border-slate-700/80 bg-[#102945]/75 p-3 shadow-sm transition-colors hover:border-indigo-400/30"
                 >
                   <div className="flex flex-wrap items-center gap-2">
                     <TypeBadge type={announcement.type} urgent={announcement.urgent} />
