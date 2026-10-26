@@ -22,6 +22,9 @@ export interface Task {
   /** null => utilise le délai global des préférences */
   reminderOffsetMinutes: number | null
   reminderEnabled: boolean
+  /** projet rattaché (FEATURE-UI-SHELL, contrat v1.3) */
+  projectId: string | null
+  projectName: string | null
   createdAt: string
   updatedAt: string
 }

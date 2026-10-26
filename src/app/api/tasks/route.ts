@@ -19,6 +19,7 @@ const createTaskSchema = z
     dueAt: z.iso.datetime({ offset: true }).nullable().optional(),
     reminderOffsetMinutes: z.number().int().min(1).max(10080).nullable().optional(),
     reminderEnabled: z.boolean().optional(),
+    projectId: z.string().trim().max(64).nullable().optional(),
   })
   .strict();
 
@@ -51,6 +52,7 @@ export async function GET(request: NextRequest) {
         ...(status ? { status } : {}),
         ...(category ? { category } : {}),
       },
+      include: { project: { select: { name: true } } },
     });
 
     // dueAt asc avec nulls en DERNIER, puis createdAt desc (contrat v1).
@@ -83,6 +85,14 @@ export async function POST(request: NextRequest) {
       return errorResponse(`Tâche invalide — ${zodErrorMessage(parsed.error)}`, 400);
     }
     const data = parsed.data;
+    if (data.projectId) {
+      const project = await db.project.findFirst({
+        where: { id: data.projectId, userId: user.id },
+      });
+      if (!project) {
+        return errorResponse("Projet introuvable", 404);
+      }
+    }
     const task = await db.task.create({
       data: {
         title: data.title,
@@ -92,8 +102,10 @@ export async function POST(request: NextRequest) {
         dueAt: data.dueAt ? new Date(data.dueAt) : null,
         reminderOffsetMinutes: data.reminderOffsetMinutes ?? null,
         reminderEnabled: data.reminderEnabled ?? true,
+        projectId: data.projectId ?? null,
         userId: user.id,
       },
+      include: { project: { select: { name: true } } },
     });
     return NextResponse.json({ task: serializeTask(task) }, { status: 201 });
   } catch (error) {

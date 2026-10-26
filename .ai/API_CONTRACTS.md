@@ -193,6 +193,73 @@ Règles transverses v1.1 : scoping strict par `userId` côté serveur (tâches, 
 tâche, anti-frénésie) · accès croisé inter-utilisateurs = **404 générique** (jamais 403, sans
 divulgation d'existence) · secret JWT jamais commité (`.env` hors git) · ADR-003 fait foi.
 
+## ✅ Contrats v1.3 — FEATURE-UI-SHELL « Espace de travail » (Task 33 — AUTHORITATIF)
+
+Règles transverses v1.3 : scoping strict `userId` (projets, notes, activité) · 404 générique
+inter-utilisateurs · le projet référencé (`projectId`) doit appartenir à l'utilisateur → sinon 404 ·
+scoping côté serveur uniquement · Task.projectId nullable (SetNull à la suppression d'un projet).
+
+### GET /api/projects?status=
+Description: liste des projets de l'utilisateur (compteurs tâches inclus)
+Auth: session
+Query: status? = actif|en_pause|termine|archive
+Response 200: { projects: Project[] }  # tri favorite desc, updatedAt desc ; Project inclut taskCount + doneTaskCount
+Erreurs: 400 | 401 | 500: { error }
+
+### POST /api/projects
+Description: création de projet
+Auth: session
+Request: { name: string(1..120); description?: string(0..2000); status?; priority?; favorite?; color?; dueAt?: ISO|null }
+Response 201: { project: Project }
+Erreurs: 400 | 401 | 500: { error }
+
+### GET | PATCH | DELETE /api/projects/[id]
+Description: détail / mise à jour partielle / suppression (tâches et notes détachées via SetNull)
+Auth: session
+PATCH Request: champs partiels du POST (name, description, status, priority, favorite, color, dueAt)
+Response 200: { project: Project } | DELETE: { ok: true }
+Erreurs: 400 | 401 | 404 (générique inter-users) | 500: { error }
+
+### GET /api/notes?projectId=&trashed=
+Description: liste des notes (toutes / corbeille / par projet) — include projectName
+Auth: session
+Response 200: { notes: Note[] }  # tri favorite desc, updatedAt desc
+Erreurs: 400 | 401 | 500: { error }
+
+### POST /api/notes
+Description: création de note (association projet optionnelle vérifiée)
+Auth: session
+Request: { title: string(1..160); content?: string(0..50_000); projectId?: string|null; favorite?: boolean }
+Response 201: { note: Note }
+Erreurs: 400 | 401 | 404 (projet introuvable) | 500: { error }
+
+### GET | PATCH | DELETE /api/notes/[id]
+Description: détail / mise à jour partielle (title, content, favorite, trashed, projectId) / suppression définitive
+Auth: session
+Response 200: { note: Note } | DELETE: { ok: true }
+Erreurs: 400 | 401 | 404 (générique inter-users) | 500: { error }
+
+### GET /api/activity?limit=
+Description: journal d'activité — ReminderLog des tâches de l'utilisateur (scopage via la tâche)
+Auth: session
+Query: limit? = 1..200 (défaut 100)
+Response 200: { activity: ActivityEntry[] }  # ActivityEntry = ReminderLog + taskTitle, tri createdAt desc
+Erreurs: 400 | 401 | 500: { error }
+
+### POST /api/ai/chat
+Description: Assistant IA conversationnel (SDK z-ai-web-dev-sdk — BACKEND uniquement)
+Auth: session
+Rate limit: 10 requêtes / 5 min / IP (429 + Retry-After, limiteur DEBT-021)
+Request: { messages: { role: user|assistant; content: string(1..4000) }[1..20]; context?: general|dev|planification }
+Response 200: { message: { role: "assistant"; content: string; at: ISO }; remaining: number|null }
+Erreurs: 400 | 401 | 429 | 500 | 502: { error }
+Sécurité: AUCUN accès outillé aux données en v1 (ROLES_PERMISSIONS.md §3) — seul un indice de
+comptes (tâches en cours / projets actifs) est injecté côté serveur ; pas de contenu privé.
+
+### Modification v1.1 → v1.3 des endpoints existants
+- `POST /api/tasks` et `PATCH /api/tasks/[id]` : acceptent désormais `projectId?: string|null`
+  (projet vérifié côté serveur) ; sérialisation Task enrichie de `projectId` + `projectName`.
+
 ## 🗄️ Contrats archivés
 
 ### `GET /api` — Endpoint de santé démo scaffold → **remplacé par `GET /api/health`** (DEBT-002, 2026-10-25)
@@ -201,3 +268,5 @@ divulgation d'existence) · secret JWT jamais commité (`.env` hors git) · ADR-
 ## Journal des modifications
 - 2026-10-25 : Création ; recensement de l'unique endpoint existant (`GET /api`).
 - 2026-10-25 : v1 FEATURE-001 (7 endpoints) ; v1.1 FEATURE-AUTH (Task 22) — 4 endpoints auth + passage des 9 endpoints métier en `Auth: session` + types AuthUser/scopage (ADR-003).
+- 2026-10-26 : v1.2 (AUDIT-004 M3) — 429 + Retry-After documentés sur register/login.
+- 2026-10-26 : v1.3 FEATURE-UI-SHELL (Task 33) — 6 nouveaux endpoints (projects, notes, activity, ai/chat) + projectId sur tasks ; types Project/Note/ActivityEntry/AiChatResponse (ADR-004).

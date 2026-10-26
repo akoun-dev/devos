@@ -1,18 +1,18 @@
 # 📊 BACKLOG CENTRAL — Vue lisible (miroir de TASKS.xlsx)
 
-> **Dernière mise à jour** : 2026-10-26 (UTC) · **Responsable** : AGENT 2 · **Source de vérité** : `.ai/TASKS.xlsx`
+> **Dernière mise à jour** : 2026-10-26 (UTC, FEATURE-UI-SHELL) · **Responsable** : AGENT 2 · **Source de vérité** : `.ai/TASKS.xlsx`
 
 ## Statistiques
 
 | Statut | Nombre |
 |---|---|
-| ✅ Terminées | 18 |
+| ✅ Terminées | 19 |
 | 🔄 En cours | 0 |
 | ⏳ À faire | 0 |
 | 🚫 Bloquées | 0 |
-| **Total** | **18** |
+| **Total** | **19** |
 
-**Progression moyenne : 100 %** · **Score santé projet : 80/100** (AUDIT-004 2026-10-26 · 0 CRITIQUE · 0 MAJEUR · verdict **AUTORISÉ** — AUDIT-003 77/100 et ses conditions toutes soldées : DEBT-022/019 (Task 24-ter/quater), DEBT-013 CSP + DEBT-021 rate limiting (Task 26, commits db13a8b/88f334f), REV-004 APPROUVÉE (Task 27), TASK-018 responsive AuthGate (Task 29, commit e4cc754)) · **Dette : 22 items — 17 TRAITÉ · 2 EN COURS · 1 REPORTÉ · 1 ACCEPTÉE · 1 OUVERT (018)**
+**Progression moyenne : 100 %** · **Score santé projet : 80/100 (AUDIT-004)** — **AUDIT-005 en cours** après FEATURE-UI-SHELL (TASK-019) · **Dette : 22 items — 17 TRAITÉ · 2 EN COURS · 1 REPORTÉ · 1 ACCEPTÉE · 1 OUVERT (018)**
 
 ## Tâches
 
@@ -36,6 +36,7 @@
 | TASK-016 | PRODUIT | DevOS — Authentification (FEATURE-AUTH, Task 24) | AUDIT GLOBAL #003 post-FEATURE-AUTH + preuve E2E compte (Task 23) + soldes immédiats DEBT-022/019 (Task 24-ter/24-quater) | Audit Global + CTO | ✅ TERMINÉ | 100% | P1 | lint 0 · tsc 2→0 · bun audit 0 CRITIQUE · 24 vérifications curl auth + isolation ×2 · E2E navigateur inscription→reconnexion | ✅ PASS · 77/100 stable · AUTORISÉ SOUS CONDITION · sécurité +16 (78) |
 | TASK-017 | PRODUIT | DevOS — Authentification (FEATURE-AUTH, Task 26) | Durcissement sécurité pré-prod : rate limiting DEBT-021 + CSP DEBT-013 + revue indépendante REV-004 (Task 27) | ORCHESTRATEUR (CTO) + AGENT REVIEWER | ✅ TERMINÉ | 100% | P1 | Saturation curl 429 + Retry-After (login 10/15 min, register 5/h) · navigation complète 0 violation CSP · lint 0 · tsc 0 | ✅ PASS · REV-004 APPROUVÉE (0 bloquant/majeur, 4 mineurs tracés) · commits 88f334f, db13a8b |
 | TASK-018 | PRODUIT | DevOS — Authentification (FEATURE-AUTH, Task 29) | Responsivité mobile de la vue de connexion (AuthGate) : min-h-dvh + centrage sûr (my-auto), paddings scoped 320 px, h1 sr-only | Frontend / UX (CTO) | ✅ TERMINÉ | 100% | P2 | agent-browser 375/320/667×375 paysage/1280 (hasHScroll=false partout, cardTop=40 px au scroll-top en paysage) · E2E mobile connexion démo · lint 0 · tsc 0 | ✅ PASS · 8 captures before/after · toast mobile top observé · environnement : JWT_SECRET régénéré + seed rejoué (dérive restauration) |
+| TASK-019 | PRODUIT | DevOS — Espace de travail (FEATURE-UI-SHELL, Task 33) | Shell complet : sidebar 4 sections + permissions centralisées + 12 vues fonctionnelles + navigation mobile 5 destinations (ADR-004, contrats v1.3) | Équipe complète (CTO) | ✅ TERMINÉ | 100% | P1 | lint 0 · tsc 0 · curl CRUD projects/notes/activity + ai/chat LLM réel · E2E navigateur desktop+mobile (créations UI, smart views, tiroir, 0 erreur console) | ✅ PASS · ADR-004 + ROLES_PERMISSIONS.md · xlsx validate passed · purge artefacts E2E |
 
 ## Règles de dépendance rappelées
 - Frontend bloqué tant que contrat API non validé (`API_CONTRACTS.md`)
@@ -43,4 +44,4 @@
 - Aucune tâche TERMINÉE sans : commits propres + revue positive ; frontend : + a11y + perf
 - Aucune livraison PROD sans audit global ≥ 60/100
 
-> Prochaine étape : restant **avant toute exposition prod réelle** — DEBT-020 (purge des 6 comptes de démonstration) + verrouillage accès direct :3000 hors passerelle (mineur REV-004) ; itération suivante : DEBT-018 (doc gouvernance), DEBT-003 vague 2 ESLint, DEBT-017 découpage UI (h1 AuthGate ✅ fait Task 29) ; **AUDIT-004** déclenché après TASK-018 (règle « audit après chaque évolution »).
+> Prochaine étape : **AUDIT-005** déclenché après TASK-019 (règle « audit après chaque feature ») ; itération suivante : historique IA persistant, mode mains libres, automatisations, Git/GitHub ; restant **avant toute exposition prod réelle** — DEBT-020 (purge des comptes de démonstration) + verrouillage accès direct :3000 hors passerelle ; dette : DEBT-017 (découpage settings-screen.tsx 632 l.), DEBT-018 (doc), DEBT-003 vague 2 ESLint.

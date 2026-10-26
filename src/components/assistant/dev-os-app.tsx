@@ -1,25 +1,36 @@
 'use client'
 
 /**
- * DevOSApp — racine cliente de la page unique `/` (FEATURE-001).
- * 3 onglets : Assistant · Tâches · Paramètres. Header (h1 + statut + identité) + footer sticky.
- * Couleurs sémantiques : actif=emerald, suspendu=amber, heures silencieuses=zinc. Aucun bleu/indigo.
- * FEATURE-AUTH : exigé connecté (AuthGate en amont) ; expiration de session (401) → onSessionExpired.
+ * DevOSApp — racine cliente de la page unique `/` (FEATURE-UI-SHELL, ADR-004).
+ *
+ * Routeur d'état : currentView (registre src/lib/navigation.ts) rendu dans
+ * AppShell (sidebar desktop + tiroir mobile + barre inférieure 5 destinations).
+ * Le moteur vocal FEATURE-001 (useVoiceAssistant) reste partagé par toutes les
+ * vues ; l'hook useWorkspace alimente projets/notes/activité.
+ * Rôle v1 : proprietaire (matrice ROLES_PERMISSIONS.md).
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { LogOut, Volume2 } from 'lucide-react'
+import { useCallback, useMemo, useState, useEffect } from 'react'
 
-import { AssistantPanel } from '@/components/assistant/assistant-panel'
-import { SettingsScreen } from '@/components/assistant/settings-screen'
-import { TasksManager } from '@/components/assistant/tasks-manager'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { AppShell } from '@/components/shell/app-shell'
+import { ComingSoonView } from '@/components/shell/coming-soon-view'
+import { ActivityView } from '@/components/views/activity-view'
+import { AiChatView } from '@/components/views/ai-chat-view'
+import { DashboardView } from '@/components/views/dashboard-view'
+import { NotesView } from '@/components/views/notes-view'
+import { NotificationsView } from '@/components/views/notifications-view'
+import { PlanningView } from '@/components/views/planning-view'
+import { ProjectsView } from '@/components/views/projects-view'
+import { SettingsView } from '@/components/views/settings-view'
+import { SyncView } from '@/components/views/sync-view'
+import { TasksView } from '@/components/views/tasks-view'
+import { VoiceView } from '@/components/views/voice-view'
 import { useVoiceAssistant } from '@/hooks/use-voice-assistant'
-import { cn } from '@/lib/utils'
+import { useWorkspace } from '@/hooks/use-workspace'
+import { DEFAULT_VIEW } from '@/lib/navigation'
+import { DEFAULT_ROLE } from '@/lib/permissions'
 import type { AuthUser } from '@/types/assistant'
+import type { ViewId } from '@/types/workspace'
 
 interface DevOSAppProps {
   user: AuthUser
@@ -29,7 +40,6 @@ interface DevOSAppProps {
 }
 
 type AssistantStatus = 'active' | 'suspended' | 'quiet'
-type TabKey = 'assistant' | 'tasks' | 'settings'
 
 const STATUS_CONFIG: Record<AssistantStatus, { label: string; className: string; dot: string }> = {
   active: {
@@ -53,11 +63,14 @@ const STATUS_CONFIG: Record<AssistantStatus, { label: string; className: string;
 
 export function DevOSApp({ user, onLogout, onSessionExpired }: DevOSAppProps) {
   const assistant = useVoiceAssistant(onSessionExpired)
-  const [activeTab, setActiveTab] = useState<TabKey>('assistant')
+  const workspace = useWorkspace(onSessionExpired)
+  const [currentView, setCurrentView] = useState<ViewId>(DEFAULT_VIEW)
   const [highlightTaskId, setHighlightTaskId] = useState<string | null>(null)
-  const [clock, setClock] = useState<string>('')
+  const [taskFormSignal, setTaskFormSignal] = useState(0)
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission | 'unsupported'>('default')
+  const [clock, setClock] = useState('')
 
-  // Horloge locale (côté client uniquement — évite tout écart d'hydratation)
+  // Horloge locale (client uniquement — évite tout écart d'hydratation)
   useEffect(() => {
     const update = () => setClock(new Date().toLocaleTimeString('fr-FR'))
     update()
@@ -65,28 +78,56 @@ export function DevOSApp({ user, onLogout, onSessionExpired }: DevOSAppProps) {
     return () => clearInterval(id)
   }, [])
 
+  // Permission notifications (lecture + écoute)
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('Notification' in window)) {
+      setNotificationPermission('unsupported')
+      return
+    }
+    setNotificationPermission(Notification.permission)
+  }, [])
+
+  const requestNotificationPermission = useCallback(() => {
+    if (typeof window === 'undefined' || !('Notification' in window)) return
+    void Notification.requestPermission().then((result) => setNotificationPermission(result))
+  }, [])
+
   const status = useMemo<AssistantStatus | null>(() => {
     const prefs = assistant.prefs
     if (!prefs) return null
     const suspendedNow =
-      prefs.suspended ||
-      (prefs.suspendedUntil !== null && new Date(prefs.suspendedUntil).getTime() > Date.now())
+      prefs.suspended || (prefs.suspendedUntil !== null && new Date(prefs.suspendedUntil).getTime() > Date.now())
     if (!prefs.enabled || suspendedNow) return 'suspended'
     if (assistant.quietHours?.active) return 'quiet'
     return 'active'
   }, [assistant.prefs, assistant.quietHours])
 
-  const handleViewTask = useCallback((taskId: string) => {
-    setHighlightTaskId(taskId)
-    setActiveTab('tasks')
-    window.setTimeout(() => setHighlightTaskId(null), 6000)
+  const navigate = useCallback((view: ViewId) => {
+    // Toutes les vues (actives et planned) ont un rendu : les planned affichent
+    // la vue explicative ComingSoonView (structure cible — jamais de clic mort).
+    setCurrentView(view)
+    window.scrollTo({ top: 0 })
   }, [])
 
-  // Après chaque mutation de tâche : rafraîchir la liste + tick immédiat (recalcul)
-  const handleTaskMutated = useCallback(() => {
+  const handleViewTask = useCallback(
+    (taskId: string) => {
+      setHighlightTaskId(taskId)
+      setCurrentView('tasks')
+      window.setTimeout(() => setHighlightTaskId(null), 6000)
+    },
+    []
+  )
+
+  const openNewTask = useCallback(() => {
+    setTaskFormSignal((signal) => signal + 1)
+    setCurrentView('tasks')
+  }, [])
+  const handleMutated = useCallback(() => {
     void assistant.refreshTasks()
     void assistant.tickNow()
-  }, [assistant.refreshTasks, assistant.tickNow])
+    void workspace.refreshActivity()
+    void workspace.refreshProjects()
+  }, [assistant.refreshTasks, assistant.tickNow, workspace.refreshActivity, workspace.refreshProjects])
 
   const toggleSuspended = useCallback(() => {
     const prefs = assistant.prefs
@@ -96,148 +137,200 @@ export function DevOSApp({ user, onLogout, onSessionExpired }: DevOSAppProps) {
 
   const statusConfig = status ? STATUS_CONFIG[status] : null
 
-  const initials = useMemo(() => {
-    const source = (user.name ?? user.email).trim()
-    const parts = source.split(/[\s@._-]+/).filter(Boolean)
-    const letters = parts
-      .slice(0, 2)
-      .map((part) => part[0]?.toUpperCase() ?? '')
-      .join('')
-    return letters || '?'
-  }, [user.name, user.email])
-
-  const handleLogoutClick = useCallback(() => {
-    void onLogout()
-  }, [onLogout])
+  const renderView = useCallback(() => {
+    switch (currentView) {
+      case 'dashboard':
+        return (
+          <DashboardView
+            tasks={assistant.tasks}
+            projects={workspace.projects}
+            activity={workspace.activity}
+            loading={assistant.tasksLoading || workspace.projectsLoading || workspace.activityLoading}
+            announcements={assistant.announcements}
+            onNavigate={navigate}
+            onNewTask={openNewTask}
+            onSpeakTest={() => void assistant.speakTest()}
+          />
+        )
+      case 'projects':
+        return (
+          <ProjectsView
+            projects={workspace.projects}
+            projectsLoading={workspace.projectsLoading}
+            tasks={assistant.tasks}
+            loadingTasks={assistant.tasksLoading}
+            onCreate={async (payload) => {
+              await workspace.createProject(payload)
+            }}
+            onUpdate={async (id, payload) => {
+              await workspace.updateProject(id, payload)
+            }}
+            onDelete={async (id) => {
+              await workspace.deleteProject(id)
+            }}
+          />
+        )
+      case 'tasks':
+        return (
+          <TasksView
+            formSignal={taskFormSignal}
+            tasks={assistant.tasks}
+            tasksLoading={assistant.tasksLoading}
+            projects={workspace.projects}
+            categories={assistant.categories}
+            highlightTaskId={highlightTaskId}
+            onMutated={handleMutated}
+            onUnauthorized={onSessionExpired}
+          />
+        )
+      case 'planning':
+        return <PlanningView tasks={assistant.tasks} loading={assistant.tasksLoading} />
+      case 'notes':
+        return (
+          <NotesView
+            notes={workspace.notes}
+            notesLoading={workspace.notesLoading}
+            projects={workspace.projects.map((project) => ({ id: project.id, name: project.name }))}
+            onCreate={async (payload) => {
+              await workspace.createNote(payload)
+            }}
+            onUpdate={async (id, payload) => {
+              await workspace.updateNote(id, payload)
+            }}
+            onDelete={async (id) => {
+              await workspace.deleteNote(id)
+            }}
+          />
+        )
+      case 'ai-chat':
+        return <AiChatView onUnauthorized={onSessionExpired} />
+      case 'voice':
+        return (
+          <VoiceView
+            prefs={assistant.prefs}
+            prefsLoading={assistant.prefsLoading}
+            announcements={assistant.announcements}
+            quietHours={assistant.quietHours}
+            onSnooze={assistant.snooze}
+            onSpeakTest={() => void assistant.speakTest()}
+            onToggleSuspended={toggleSuspended}
+            onViewTask={handleViewTask}
+          />
+        )
+      case 'activity':
+        return (
+          <ActivityView
+            activity={workspace.activity}
+            loading={workspace.activityLoading}
+            onRefresh={workspace.refreshActivity}
+          />
+        )
+      case 'notifications':
+        return (
+          <NotificationsView
+            permission={notificationPermission}
+            announcements={assistant.announcements}
+            prefs={assistant.prefs}
+            onRequestPermission={requestNotificationPermission}
+            onNavigate={navigate}
+          />
+        )
+      case 'sync':
+        return <SyncView tick={assistant.lastTick} onRefresh={assistant.refreshTasks} onTickNow={assistant.tickNow} />
+      case 'settings':
+        return (
+          <SettingsView
+            prefs={assistant.prefs}
+            prefsLoading={assistant.prefsLoading}
+            categories={assistant.categories}
+            onSave={(partial) => void assistant.savePrefs(partial)}
+            onSpeakTest={() => void assistant.speakTest()}
+            onToggleSuspended={toggleSuspended}
+          />
+        )
+      case 'automations':
+        return (
+          <ComingSoonView
+            viewId="automations"
+            label="Automatisations"
+            description="Déclencher des actions selon des conditions et horaires (scénarios prédéfinis)."
+            plannedViews={['Mes automatisations', 'Créer', 'Historique des exécutions']}
+            actions={['Créer un scénario (déclencheur → condition → action)', 'Exécution par le scheduler existant', 'Confirmations pour les actions sensibles']}
+          />
+        )
+      case 'git':
+        return (
+          <ComingSoonView
+            viewId="git"
+            label="Dépôts & Git"
+            description="Consulter et suivre les dépôts locaux autorisés."
+            plannedViews={['Dépôts locaux', 'État Git', 'Branches', 'Commits', 'Modifications']}
+            actions={['Enregistrer des dépôts autorisés', 'Lire état/branches/commits', 'Liste blanche d\u2019outils + confirmations']}
+          />
+        )
+      case 'github':
+        return (
+          <ComingSoonView
+            viewId="github"
+            label="GitHub"
+            description="Suivre le travail distant et préparer les revues."
+            plannedViews={['Dépôts distants', 'Issues', 'Pull requests', 'Workflows CI/CD']}
+            actions={['Connecter une intégration GitHub', 'Suivre issues/PR/CI', 'Masquage si non connecté (ADR-004)']}
+          />
+        )
+      case 'terminal':
+        return (
+          <ComingSoonView
+            viewId="terminal"
+            label="Terminal & Outils"
+            description="Exécuter les outils autorisés et suivre leurs résultats."
+            plannedViews={['Sessions', 'Outils disponibles', "Tâches d'exécution", 'Résultats']}
+            actions={['Liste blanche stricte d\u2019outils', 'Confirmations pour opérations sensibles', 'Journalisation intégrale']}
+          />
+        )
+      case 'storage':
+        return (
+          <ComingSoonView
+            viewId="storage"
+            label="Stockage & Sauvegardes"
+            description="Gérer les données et les restaurations."
+            plannedViews={['Espace utilisé', 'Sauvegardes', 'Restaurations']}
+            actions={['Mesurer l\u2019espace par type de données', 'Exporter/restaurer (JSON + pièces)', 'Sauvegarde planifiée']}
+          />
+        )
+      default:
+        return null
+    }
+  }, [
+    currentView,
+    assistant,
+    workspace,
+    navigate,
+    openNewTask,
+    handleViewTask,
+    handleMutated,
+    toggleSuspended,
+    highlightTaskId,
+    onSessionExpired,
+    notificationPermission,
+    requestNotificationPermission,
+    taskFormSignal,
+  ])
 
   return (
-    <div className="flex min-h-screen flex-col bg-background text-foreground">
-      <header className="sticky top-0 z-40 border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
-        <div className="mx-auto flex w-full max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
-          <div className="flex min-w-0 items-center gap-3">
-            <span
-              className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground"
-              aria-hidden="true"
-            >
-              <Volume2 className="size-5" />
-            </span>
-            <div className="min-w-0">
-              <h1 className="truncate text-base font-semibold leading-tight sm:text-lg">
-                DevOS — Assistant vocal proactif
-              </h1>
-              <p className="text-xs text-muted-foreground sm:text-sm">
-                Rappels vocaux intelligents pour vos tâches
-              </p>
-            </div>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            {statusConfig ? (
-              <Badge
-                variant="outline"
-                className={cn('gap-1.5 px-2.5 py-1 text-xs font-medium', statusConfig.className)}
-                aria-label={`État de l'assistant : ${statusConfig.label}`}
-              >
-                <span className={cn('size-2 rounded-full', statusConfig.dot)} aria-hidden="true" />
-                {statusConfig.label}
-              </Badge>
-            ) : (
-              <Skeleton className="h-6 w-32 rounded-full" />
-            )}
-            <div
-              className="flex items-center gap-1.5 rounded-full border bg-card py-1 pl-1 pr-1"
-              title={user.email}
-            >
-              <span
-                className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-semibold text-primary"
-                aria-hidden="true"
-              >
-                {initials}
-              </span>
-              <span className="hidden max-w-40 truncate text-sm sm:inline">
-                {user.name ?? user.email}
-              </span>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="size-8 rounded-full text-muted-foreground hover:text-foreground"
-                onClick={handleLogoutClick}
-                aria-label="Se déconnecter"
-              >
-                <LogOut className="size-4" aria-hidden="true" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-4 sm:px-6 sm:py-6">
-        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as TabKey)} className="gap-4">
-          <TabsList className="grid h-11 w-full grid-cols-3 sm:h-10 sm:w-fit sm:grid-cols-3">
-            <TabsTrigger value="assistant" className="h-full min-h-11 sm:min-h-9">
-              Assistant
-            </TabsTrigger>
-            <TabsTrigger value="tasks" className="h-full min-h-11 sm:min-h-9">
-              Tâches
-            </TabsTrigger>
-            <TabsTrigger value="settings" className="h-full min-h-11 sm:min-h-9">
-              Paramètres
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="assistant" className="mt-2">
-            <AssistantPanel
-              prefs={assistant.prefs}
-              prefsLoading={assistant.prefsLoading}
-              announcements={assistant.announcements}
-              quietHours={assistant.quietHours}
-              onSnooze={assistant.snooze}
-              onSpeakTest={() => void assistant.speakTest()}
-              onToggleSuspended={toggleSuspended}
-              onViewTask={handleViewTask}
-            />
-          </TabsContent>
-
-          <TabsContent value="tasks" className="mt-2">
-            <TasksManager
-              tasks={assistant.tasks}
-              tasksLoading={assistant.tasksLoading}
-              categories={assistant.categories}
-              highlightTaskId={highlightTaskId}
-              onMutated={handleTaskMutated}
-            />
-          </TabsContent>
-
-          <TabsContent value="settings" className="mt-2">
-            <SettingsScreen
-              prefs={assistant.prefs}
-              prefsLoading={assistant.prefsLoading}
-              categories={assistant.categories}
-              onSave={(partial) => void assistant.savePrefs(partial)}
-              onSpeakTest={() => void assistant.speakTest()}
-              onToggleSuspended={toggleSuspended}
-            />
-          </TabsContent>
-        </Tabs>
-      </main>
-
-      <footer className="mt-auto border-t bg-card/80 pb-[env(safe-area-inset-bottom)]">
-        <div className="mx-auto flex w-full max-w-5xl flex-wrap items-center justify-between gap-x-4 gap-y-1 px-4 py-3 text-xs text-muted-foreground sm:px-6 sm:text-sm">
-          <span>© {new Date().getFullYear()} DevOS</span>
-          <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
-            <span>Heure locale : {clock || '—'}</span>
-            <span aria-hidden="true">·</span>
-            <span>Serveur : {assistant.serverOk ? 'connecté' : 'erreur de synchronisation'}</span>
-            <span aria-hidden="true">·</span>
-            <span>Dernière synchro : {assistant.lastTickLabel ?? '—'}</span>
-            {assistant.quietHours?.active && assistant.quietHours.window ? (
-              <>
-                <span aria-hidden="true">·</span>
-                <span>Heures silencieuses : {assistant.quietHours.window}</span>
-              </>
-            ) : null}
-          </span>
-        </div>
-      </footer>
-    </div>
+    <AppShell
+      user={user}
+      role={DEFAULT_ROLE}
+      currentView={currentView}
+      onNavigate={navigate}
+      statusConfig={statusConfig}
+      clock={clock}
+      serverOk={assistant.serverOk}
+      lastTickLabel={assistant.lastTickLabel}
+      quietWindow={assistant.quietHours?.active ? (assistant.quietHours.window ?? null) : null}
+      onLogout={() => void onLogout()}
+    >
+      {renderView()}
+    </AppShell>
   )
 }

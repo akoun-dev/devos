@@ -4,9 +4,9 @@
  * aucun champ en trop.
  */
 
-import type { ReminderLog, Task, VoicePreferences } from "@prisma/client";
+import type { Note, Project, ReminderLog, Task, VoicePreferences } from "@prisma/client";
 
-export function serializeTask(task: Task) {
+export function serializeTask(task: Task & { project?: { name: string } | null }) {
   return {
     id: task.id,
     title: task.title,
@@ -17,8 +17,41 @@ export function serializeTask(task: Task) {
     dueAt: task.dueAt ? task.dueAt.toISOString() : null,
     reminderOffsetMinutes: task.reminderOffsetMinutes,
     reminderEnabled: task.reminderEnabled,
+    projectId: task.projectId,
+    projectName: task.project?.name ?? null,
     createdAt: task.createdAt.toISOString(),
     updatedAt: task.updatedAt.toISOString(),
+  };
+}
+
+export function serializeProject(project: Project & { _count?: { tasks: number } }, doneTaskCount = 0) {
+  return {
+    id: project.id,
+    name: project.name,
+    description: project.description,
+    status: project.status,
+    priority: project.priority,
+    favorite: project.favorite,
+    color: project.color,
+    dueAt: project.dueAt ? project.dueAt.toISOString() : null,
+    taskCount: project._count?.tasks ?? 0,
+    doneTaskCount,
+    createdAt: project.createdAt.toISOString(),
+    updatedAt: project.updatedAt.toISOString(),
+  };
+}
+
+export function serializeNote(note: Note & { project?: { name: string } | null }) {
+  return {
+    id: note.id,
+    title: note.title,
+    content: note.content,
+    favorite: note.favorite,
+    trashed: note.trashed,
+    projectId: note.projectId,
+    projectName: note.project?.name ?? null,
+    createdAt: note.createdAt.toISOString(),
+    updatedAt: note.updatedAt.toISOString(),
   };
 }
 

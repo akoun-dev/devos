@@ -17,6 +17,7 @@ const patchTaskSchema = z
     dueAt: z.iso.datetime({ offset: true }).nullable(),
     reminderOffsetMinutes: z.number().int().min(1).max(10080).nullable(),
     reminderEnabled: z.boolean(),
+    projectId: z.string().trim().max(64).nullable(),
   })
   .strict()
   .partial();
@@ -44,6 +45,14 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       return errorResponse("Tâche introuvable", 404);
     }
     const data = parsed.data;
+    if (data.projectId) {
+      const project = await db.project.findFirst({
+        where: { id: data.projectId, userId: user.id },
+      });
+      if (!project) {
+        return errorResponse("Projet introuvable", 404);
+      }
+    }
     const task = await db.task.update({
       where: { id },
       data: {
@@ -57,7 +66,9 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
           ? { reminderOffsetMinutes: data.reminderOffsetMinutes }
           : {}),
         ...(data.reminderEnabled !== undefined ? { reminderEnabled: data.reminderEnabled } : {}),
+        ...(data.projectId !== undefined ? { projectId: data.projectId } : {}),
       },
+      include: { project: { select: { name: true } } },
     });
     // status terminee/annulee ⇒ plus AUCUNE annonce future (état dérivé, AC-007).
     return NextResponse.json({ task: serializeTask(task) });

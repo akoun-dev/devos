@@ -478,3 +478,28 @@ Work Log:
 Stage Summary:
 - Compte personnel **akoun@devos.test** opérationnel (id cmvp4t0uv000csnu583qbs5es, rôle utilisateur standard) — cycle register/login/me/tasks vérifié curl + navigateur
 - Comptes actifs : akoun@devos.test (CTO) + demo@devos.test (démo, DEBT-020 purge avant prod)
+
+---
+Task ID: 33
+Agent: ORCHESTRATEUR PRINCIPAL (CTO) — Équipe complète
+Task: Exigence CTO « Développons l'interface » — FEATURE-UI-SHELL (TASK-019) : sidebar 4 sections, permissions centralisées, 12 vues fonctionnelles, navigation adaptative
+
+Work Log:
+- Analyse préalable : lecture intégrale schéma Prisma, dev-os-app, tasks-manager (531 l.), settings-screen props, hooks (use-session, use-voice-assistant), api-helpers/rate-limit/tasks routes (patterns), doc skill LLM (SDK backend uniquement)
+- Gouvernance écrite AVANT le code : .ai/ROLES_PERMISSIONS.md (matrice CTO + capacités IA graduées) · .ai/ADR/ADR-004-shell-navigation-permissions.md (registre central, page unique, planned = badge « Bientôt » + vue explicative, jamais de clic mort)
+- Prisma : +Project, +Note (favorite/trashed/projectId), Task.projectId nullable SetNull — db:push OK (correctif en vol : serveur dev redémarré pour recharger le client généré)
+- Centralisation : lib/navigation.ts (17 destinations / 4 sections exactes du cahier des charges, icônes Lucide, statut active|planned, mobilePrimary) · lib/permissions.ts (matrice rôles×vues + canAccessView, v1 = proprietaire) · types workspace (Project, Note, ActivityEntry, ChatMessage, ViewId, Role)
+- Backend (contrat v1.3 API-First) : /api/projects (GET/POST) + [id] (GET/PATCH/DELETE) — compteurs tâches via _count + groupBy terminées (correctif : alias filtré Prisma interdit) ; /api/notes + [id] (CRUD, corbeille, vérification projet côté serveur) ; /api/activity (ReminderLog scopé via tâche, limit Zod) ; /api/ai/chat (SDK ZAI serveur, 3 contextes système, messages ≤20×4000 Zod strict, rate limit 10/5 min/IP réutilisant rate-limit.ts, indice de comptes seulement — AUCUN accès outillé) ; PATCH tasks accepte projectId vérifié
+- Shell : AppShell (sidebar desktop lg+ / tiroir Sheet mobile / bottom nav 5 destinations Accueil·Projets·Tâches·Assistant·Plus / header titre+statut+horloge+identité / footer sticky conservé) · SideNav+PlannedNav générés depuis le registre (aucun menu dupliqué) · correctif : bouton « Plus » toujours présent (5ᵉ destination)
+- 12 vues (components/views/, fichiers ≤ 431 l.) : Dashboard (résumé du jour, 4 compteurs cliquables, Mes priorités, Activité récente, annonces session) · Projects (filtres favoris/archivés, création, détail avec onglets simplifiés + progression) · Tasks (7 smart views du cahier des charges + TaskFormDialog avec select projet + TaskCard ; TasksManager.tsx supprimé → DEBT-017 progressée) · Planning (calendrier mensuel lun-dim, navigation, jour sélectionné) · Notes (recherche, favoris, corbeille+restauration, association projet) · AiChat (contextes, suggestions, état modèle, remaining) · Voice (AssistantPanel réutilisé) · Activity (4 onglets : générale/IA/technique/erreurs) · Notifications (permission réelle + préférences) · Sync (health, dernière synchro, honnêteté file=0) · Settings (SettingsScreen réutilisé + plan §3.5) · ComingSoon générique (vues prévues + actions)
+- Correctifs en vol : import ZAI default (TS2614) · types ActivityEntry (snoozedUntil) · garde-fou navigate retiré (vues planned → ComingSoonView) · Alias _count.doneTasks → groupBy (PrismaClientValidationError) · 0 erreur résiduelle
+- E2E navigateur (preuves task33-*.png) : desktop dashboard (comptes réels 2/0/0/1, scheduler a annoncé la tâche test avec messages IA), sidebar 4 sections + « À venir » 5 badges, projets (création UI « Migration mobile » + progression), tâches (7 smart views, création via dialog « Préparer le build Android » visible dans Toutes), planning (calendrier octobre, 26 en émeraude), notes, IA (suggestion → réponse LLM française complète, remaining 9→8, prénom injecté), journal (entrées réelles IA/annonce/expire), mobile 375 (bottom nav 5 destinations, tiroir complet, vue Bientôt), 0 erreur console
+- Curl API : projects 200/201, notes 201, tasks+projectId 201 (projectName résolu), activity 200, ai/chat 200 LLM réel
+- Purge artefacts E2E (DEBT-020) : tasks/projects/notes test supprimés → base propre {0,0,0}
+- Gates finales : lint exit 0 · tsc exit 0 · wc -l nouveaux fichiers ≤ 431 · health ok
+- Gouvernance : API_CONTRACTS v1.3 (6 endpoints + taskId) · TASKS.xlsx TASK-019 (ligne 23, TOTAL 24 = 19 tâches, STATISTIQUES 5:23 — pipeline recalc success 0 err · validate passed) · TASKS.md miroir 19/19
+
+Stage Summary:
+- **FEATURE-UI-SHELL livrée** : interface conforme au cahier des charges CTO — sidebar stable (4 sections exactes), permissions centralisées (prêtes multi-rôles), 12 vues réellement fonctionnelles sur données réelles, 5 menus avancés « Bientôt » visibles non bloquants, navigation mobile 5 destinations — recommandation §6 respectée (pas de modules complets prématurés)
+- TASKS : **19/19 — 100 %** · Dette inchangée 22 items (DEBT-017 : -531 l. TasksManager, settings-screen restant)
+- Backlogs tracés : historique IA persistant, mode mains libres, automatisations, Git/GitHub/Terminal, sauvegardes · **AUDIT-005 déclenché** (règle) → Task 34
