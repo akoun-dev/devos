@@ -462,3 +462,19 @@ Work Log:
 Stage Summary:
 - Dépôt publié sur https://github.com/akoun-dev/devos.git (branche main) sous identité Akoun-dev — 0 secret, 0 base de données, 0 log runtime dans le dépôt distant
 - Le token d'accès n'a été ni stocké ni journalisé (usage unique inline) ; rotation recommandée
+
+---
+Task ID: 32
+Agent: ORCHESTRATEUR PRINCIPAL (CTO) — Ops
+Task: Exigence CTO « crée moi un compte de connexion, avant » — création du compte personnel Akoun-dev
+
+Work Log:
+- Création via l'API (API-First) : POST /api/auth/register { akoun@devos.test / nom « Akoun-dev (CTO) » } → **201 Created** + Set-Cookie devos_session (1er appel register de la fenêtre — budget 5/h/IP respecté)
+- Vérification cycle complet : POST /api/auth/login → 200 (2/10 dans la fenêtre 15 min) ; GET /api/auth/me avec cookie → 200 ; GET /api/tasks avec cookie → 200 {"tasks":[]} — **scopage par utilisateur prouvé** (les 3 tâches du compte démo ne fuient pas)
+- E2E navigateur : cookies vidés → connexion via l'onglet Connexion → toast « Bienvenue, Akoun-dev (CTO) ! » + app shell Assistant/Tâches/Paramètres — 0 erreur console ; preuve tool-results/task32-login-akoun-ok.png
+- Identifiants transmis au CTO dans le canal (compte local uniquement — la base SQLite est ignorée par git, rien de celui-ci n'a été ni ne sera poussé sur GitHub) ; mot de passe visible dans le canal → à changer sur demande (pas encore d'endpoint change-password : candidat backlog)
+- Worklog + commit + push synchronisé sur origin/main
+
+Stage Summary:
+- Compte personnel **akoun@devos.test** opérationnel (id cmvp4t0uv000csnu583qbs5es, rôle utilisateur standard) — cycle register/login/me/tasks vérifié curl + navigateur
+- Comptes actifs : akoun@devos.test (CTO) + demo@devos.test (démo, DEBT-020 purge avant prod)
