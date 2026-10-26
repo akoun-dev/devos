@@ -172,10 +172,28 @@ export function AiChatView({ onUnauthorized }: AiChatViewProps) {
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-5">
+      <section className="relative overflow-hidden rounded-2xl border border-blue-400/20 bg-gradient-to-br from-blue-500/15 via-indigo-500/10 to-[#0b2038] p-5 sm:p-7">
+        <div className="pointer-events-none absolute -right-10 -top-14 size-48 rounded-full bg-blue-500/10 blur-3xl" />
+        <div className="relative flex items-start gap-4">
+          <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl border border-blue-400/25 bg-blue-500/15 text-blue-300 shadow-lg shadow-blue-950/30">
+            <Bot className="size-6" aria-hidden="true" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-300">DEVOS INTELLIGENCE</p>
+            <h2 className="mt-1 text-xl font-semibold tracking-tight text-slate-50 sm:text-2xl">Assistant IA</h2>
+            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-300">Votre espace de réflexion pour analyser, planifier et développer. Choisissez un contexte, reprenez une conversation ou démarrez un nouvel échange.</p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <span className="rounded-full border border-blue-400/20 bg-blue-400/10 px-3 py-1 text-xs text-blue-200">Réponses en français</span>
+              <span className="rounded-full border border-indigo-400/20 bg-indigo-400/10 px-3 py-1 text-xs text-indigo-200">Historique persistant</span>
+              <span className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-xs text-emerald-200">Contrôle des actions conservé</span>
+            </div>
+          </div>
+        </div>
+      </section>
       {/* Historique persistant (contrat v1.4) */}
-      <Card>
-        <CardHeader className="pb-3">
+      <Card className="overflow-hidden border-slate-700/80 bg-[#0b2038]/90">
+        <CardHeader className="border-b border-slate-700/70 bg-gradient-to-r from-blue-500/[0.07] to-transparent pb-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <CardTitle className="flex items-center gap-2 text-base">
               <Bot className="size-4 text-primary" aria-hidden="true" />
@@ -275,8 +293,8 @@ export function AiChatView({ onUnauthorized }: AiChatViewProps) {
       </Card>
 
       {/* Conversation courante */}
-      <Card className="flex min-h-[50dvh] flex-col">
-        <CardContent className="flex flex-1 flex-col gap-3 p-4">
+      <Card className="flex min-h-[50dvh] flex-col overflow-hidden border-slate-700/80 bg-[#0b2038]/90">
+        <CardContent className="flex flex-1 flex-col gap-3 p-4 sm:p-5">
           {conversationTitle ? (
             <p className="truncate text-xs font-medium text-muted-foreground" aria-live="polite">
               {openingConversation ? 'Chargement…' : `Conversation : ${conversationTitle}`}
@@ -285,7 +303,7 @@ export function AiChatView({ onUnauthorized }: AiChatViewProps) {
           <div ref={listRef} className="devos-scroll flex-1 space-y-3 overflow-y-auto pr-1" aria-live="polite" aria-label="Conversation">
             {messages.length === 0 && !sending && !openingConversation ? (
               <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
-                <Sparkles className="size-8 text-muted-foreground" aria-hidden="true" />
+                <div className="flex size-14 items-center justify-center rounded-2xl border border-blue-400/20 bg-blue-500/10"><Sparkles className="size-7 text-blue-300" aria-hidden="true" /></div>
                 <p className="text-sm text-muted-foreground">
                   Posez une question ou choisissez une suggestion — réponses en français.
                 </p>
@@ -336,7 +354,7 @@ export function AiChatView({ onUnauthorized }: AiChatViewProps) {
             ) : null}
           </div>
 
-          <form onSubmit={handleSubmit} className="grid gap-2 border-t pt-3">
+          <form onSubmit={handleSubmit} className="grid gap-2 border-t border-slate-700/80 pt-4">
             <Textarea
               value={input}
               onChange={(event) => setInput(event.target.value)}
