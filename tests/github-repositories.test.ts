@@ -1,3 +1,4 @@
+/// <reference types="bun-types" />
 import { beforeEach, describe, expect, mock, test } from "bun:test";
 import { NextRequest } from "next/server";
 
