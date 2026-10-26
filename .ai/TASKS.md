@@ -1,18 +1,18 @@
 # 📊 BACKLOG CENTRAL — Vue lisible (miroir de TASKS.xlsx)
 
-> **Dernière mise à jour** : 2026-10-25 (UTC) · **Responsable** : AGENT 2 · **Source de vérité** : `.ai/TASKS.xlsx`
+> **Dernière mise à jour** : 2026-10-26 (UTC) · **Responsable** : AGENT 2 · **Source de vérité** : `.ai/TASKS.xlsx`
 
 ## Statistiques
 
 | Statut | Nombre |
 |---|---|
-| ✅ Terminées | 17 |
+| ✅ Terminées | 18 |
 | 🔄 En cours | 0 |
 | ⏳ À faire | 0 |
 | 🚫 Bloquées | 0 |
-| **Total** | **17** |
+| **Total** | **18** |
 
-**Progression moyenne : 100 %** · **Score santé projet : 77/100** (AUDIT-003 · 0 CRITIQUE · verdict AUTORISÉ SOUS CONDITION — **toutes conditions soldées** : DEBT-022/019 (Task 24-ter/quater), DEBT-013 CSP + DEBT-021 rate limiting (Task 26, commits db13a8b/88f334f), REV-004 APPROUVÉE (Task 27)) · **Dette : 22 items — 17 TRAITÉ · 2 EN COURS · 1 REPORTÉ · 1 ACCEPTÉE · 1 OUVERT (018)** *(correction arithmétique : ligne antérieure « 14 TRAITÉ » erronée — décompte vérifié 17)*
+**Progression moyenne : 100 %** · **Score santé projet : 80/100** (AUDIT-004 2026-10-26 · 0 CRITIQUE · 0 MAJEUR · verdict **AUTORISÉ** — AUDIT-003 77/100 et ses conditions toutes soldées : DEBT-022/019 (Task 24-ter/quater), DEBT-013 CSP + DEBT-021 rate limiting (Task 26, commits db13a8b/88f334f), REV-004 APPROUVÉE (Task 27), TASK-018 responsive AuthGate (Task 29, commit e4cc754)) · **Dette : 22 items — 17 TRAITÉ · 2 EN COURS · 1 REPORTÉ · 1 ACCEPTÉE · 1 OUVERT (018)**
 
 ## Tâches
 

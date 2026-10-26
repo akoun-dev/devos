@@ -1,6 +1,6 @@
 # 📡 CONTRATS D'API (API-FIRST)
 
-> **Dernière mise à jour** : 2026-10-25 (UTC, v1.1 FEATURE-AUTH) · **RÈGLE** : aucun code frontend ne consomme un endpoint absent de ce fichier.
+> **Dernière mise à jour** : 2026-10-26 (UTC, v1.2 — 429 + Retry-After documentés sur register/login, correction AUDIT-004 M3) · **RÈGLE** : aucun code frontend ne consomme un endpoint absent de ce fichier.
 
 ## Format de contrat obligatoire
 
@@ -164,7 +164,7 @@ Description: création de compte + session immédiate (Set-Cookie)
 Auth: none
 Request: { email: string(3..254, trim/minuscules, format email); password: string(8..72); name?: string(1..80) }
 Response 201: { user: AuthUser }
-Erreurs: 400 | 409 (email déjà pris): { error }
+Erreurs: 400 | 409 (email déjà pris): { error } | 429 (rate limit 5/h/IP): { error } + header Retry-After
 
 POST /api/auth/login
 Description: connexion (Set-Cookie). Message d'échec GÉNÉRIQUE + égalisation temporelle bcrypt
@@ -172,6 +172,7 @@ Auth: none
 Request: { email: string; password: string }
 Response 200: { user: AuthUser }
 Erreurs: 400 | 401: { error }     # 401 = "Email ou mot de passe incorrect." (jamais d'information sur l'existence du compte)
+          | 429 (rate limit 10/15 min/IP): { error } + header Retry-After
 
 POST /api/auth/logout
 Description: suppression du cookie de session (idempotent)

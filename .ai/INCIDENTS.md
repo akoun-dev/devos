@@ -2,4 +2,4 @@
 
 Format : INC-XXX | Date | Type (incident technique / violation intégrité) | Description | Preuve | Résolution | Leçon
 
-*(aucun incident)*
+| INC-001 | 2026-10-26 | Incident technique (dérive restauration d'environnement) | `.env` amputé de `JWT_SECRET` (auto-sauvegarde 09:16) + table `User` vide — POST /api/auth/login → 500 « JWT_SECRET manquant ou trop court » (garde `src/lib/auth.ts:36`), connexion impossible ; détecté au cours du Task 29 (E2E mobile) | `dev.log` : `[api/auth/login] POST : Error: JWT_SECRET manquant ou trop court (32 caractères minimum requis)` ; `bun -e` → `db.user.findMany()` = `[]` | Secret 48 o régénéré dans `.env` (gitignored ✓) + dev server redémarré (health ok, login E2E OK) ; `scripts/seed.ts` rejoué (démo + 3 tâches) ; `git config core.fileMode false` (157 diffs de mode 100644→100755 issus de la même restauration) | La garde env-only a fait son travail (fail-fast, 0 secret hardcodé) ; **consigner `JWT_SECRET` et les données seed dans le manifeste d'auto-sauvegarde d'environnement** pour que les restaurations réapprovisionnent les deux |

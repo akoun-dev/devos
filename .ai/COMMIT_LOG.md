@@ -21,7 +21,10 @@ Format : Hash | Type | Message | Fichiers | Atomicité (OK/KO) | Validation pre-
 | `66323b4` | chore(governance) | TASKS.xlsx TASK-015 + worklog Task 22 (FEATURE-AUTH) | OK (1 préoccupation : gouvernance) | validate xlsx reload OK | 2026-10-25 |
 | `efae4e6` | fix(seed) | Adaptation du seed au schéma multi-utilisateurs FEATURE-AUTH (DEBT-022) — user démo + userId propagés | OK (1 préoccupation : seed) | lint OK · tsc 0 · seed exit 0 | 2026-10-25 |
 | `88f334f` | feat(security) | Rate limiting mémoire sur /api/auth/register et /api/auth/login (DEBT-021) — 10/15 min login, 5/h register, 429 uniforme + Retry-After | OK (1 préoccupation : sécurité auth) | saturation curl prouvée (429 + Retry-After 877) · métier non affecté · lint OK | 2026-10-25 |
-| `db13a8b` | chore(security) | CSP finalisée et testée + X-Frame-Options DENY (DEBT-013) — 9 directives, compromis documentés | OK (1 préoccupation : headers sécurité) | navigation complète 0 violation CSP · header live curl · lint OK | 2026-10-25 |
+| `db13a8b` | chore(security) | CSP finalisée et testée + X-Frame-Options DENY (DEBT-013) — 10 directives (corrigé AUDIT-004 : le « 9 » initial était erroné), compromis documentés | OK (1 préoccupation : headers sécurité) | navigation complète 0 violation CSP · header live curl · lint OK | 2026-10-25 |
+| `31fbd94` | docs(governance) | AUDIT-003 publié (77/100, autorisé sous condition) + preuve E2E compte + soldes DEBT-022/019 | OK (1 préoccupation : gouvernance) | audit pur + preuve E2E Task 23 | 2026-10-25 |
+| `6630d24` | docs(governance) | Durcissement sécurité soldé — DEBT-013/021 TRAITÉ, REV-004 APPROUVÉE, TASKS 17/17 | OK (1 préoccupation : gouvernance) | xlsx validate passed | 2026-10-26 |
+| `e4cc754` | feat(ui) | Responsivité mobile vue de connexion AuthGate — TASK-018 (min-h-dvh + centrage sûr, paddings 320 px, h1 sr-only) | KO partielle (code + gouvernance + 10 captures + script pipeline en 1 commit — constat AUDIT-004 M6, à scinder à l'avenir) | lint 0 · tsc 0 · agent-browser 4 viewports · E2E mobile login | 2026-10-26 |
 
 ### Commits auto « sauvegarde d'environnement » (consignation DEBT-019, Task 24-quater)
 Commits à message UUID générés automatiquement par l'environnement de développement (auto-sauvegarde), hors contrôle conventionnel des agents — consignés ici pour traçabilité complète de l'historique :
