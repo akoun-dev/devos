@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Bot, Mic, MicOff, Send, Volume2, X } from 'lucide-react'
+import { Bot, Mic, MicOff, MessageCircle, Send, Volume2, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { apiFetch } from '@/lib/assistant/api'
 import { speak, cancelSpeech } from '@/lib/assistant/tts'
@@ -28,6 +28,7 @@ type SpeechWindow = Window & {
 export function FloatingAssistant() {
   const [open, setOpen] = useState(false)
   const [listening, setListening] = useState(false)
+  const [conversational, setConversational] = useState(false)
   const [busy, setBusy] = useState(false)
   const [conversationId, setConversationId] = useState<string | null>(null)
   const [input, setInput] = useState('')
@@ -148,8 +149,8 @@ export function FloatingAssistant() {
             </header>
 
             <div className="relative flex flex-1 flex-col items-center justify-center overflow-hidden">
-              <div className={cn('pointer-events-none absolute top-5 size-40 rounded-full bg-blue-500/10 blur-3xl transition-all', listening && 'size-64 bg-cyan-400/20')} />
-              <div className="z-10 flex w-full flex-1 flex-col gap-3 overflow-y-auto p-4">
+              <div className={cn('pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(49,91,184,0.16),transparent_58%)] transition-opacity', listening && 'opacity-100')} />
+              <div className="z-10 flex w-full flex-1 flex-col gap-3 overflow-y-auto p-4">\n                <div className="flex min-h-64 shrink-0 flex-col items-center justify-center gap-4 py-3">\n                  <div className={cn('relative flex size-36 items-center justify-center rounded-full transition-all duration-700 sm:size-40', listening ? 'scale-105' : busy ? 'scale-100' : 'scale-95')}>\n                    <div className={cn('absolute inset-[-18px] rounded-full bg-blue-500/10 blur-xl transition-all duration-700', listening && 'inset-[-30px] animate-pulse bg-cyan-300/20')} />\n                    <div className={cn('absolute inset-0 rounded-full border border-white/20 bg-gradient-to-br from-white via-[#c4d4ff] to-[#7196ff] shadow-[inset_-12px_-16px_28px_rgba(39,70,158,0.3),inset_8px_8px_20px_rgba(255,255,255,0.9),0_0_35px_rgba(86,130,255,0.32)]', listening && 'animate-pulse shadow-[inset_-12px_-16px_28px_rgba(39,70,158,0.25),inset_8px_8px_20px_rgba(255,255,255,0.95),0_0_65px_rgba(96,165,250,0.7)]')} />\n                    <div className="absolute inset-[8%] rounded-full bg-[radial-gradient(ellipse_at_30%_24%,rgba(255,255,255,0.95),rgba(255,255,255,0.35)_23%,transparent_48%)]" />\n                    <div className="absolute inset-0 rounded-full bg-[conic-gradient(from_210deg,transparent,rgba(255,255,255,0.55),transparent_38%,rgba(96,165,250,0.24),transparent_72%)] opacity-60" />\n                  </div>\n                  <div className="text-center"><p className="font-medium text-slate-100">{listening ? 'Je vous écoute' : busy ? 'Je réfléchis…' : 'Je suis là pour vous aider'}</p><p className="mt-1 text-xs text-slate-400">{conversational ? 'Mode conversationnel activé' : 'Parlez ou écrivez votre demande'}</p></div>\n                </div>
                 {messages.map((message, index) => (
                   <div key={index} className={cn('max-w-[88%] whitespace-pre-wrap rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed', message.role === 'user' ? 'ml-auto rounded-br-md bg-blue-600 text-white' : 'mr-auto rounded-bl-md border border-slate-700 bg-[#112640] text-slate-100')}>
                     {message.content}
@@ -160,7 +161,7 @@ export function FloatingAssistant() {
                 <div ref={endRef} />
               </div>
               <div className="flex w-full flex-col items-center gap-3 border-t border-slate-700/80 bg-[#0b1d33] p-4">
-                <div className="flex min-h-24 flex-col items-center justify-center gap-2">
+                <div className="flex flex-wrap items-center justify-center gap-2"><Button type="button" variant={conversational ? 'default' : 'outline'} onClick={() => setConversational((value) => !value)} className={cn('gap-2 border-slate-600', conversational ? 'bg-indigo-600 text-white hover:bg-indigo-500' : 'bg-[#10243c] text-slate-200 hover:bg-slate-700')}><MessageCircle className="size-4" />{conversational ? 'Conversation activée' : 'Mode conversationnel'}</Button></div>\n                <div className="flex min-h-24 flex-col items-center justify-center gap-2">
                   <button type="button" onClick={listening ? stopListening : startListening} aria-pressed={listening} aria-label={listening ? 'Arrêter l’écoute' : 'Démarrer l’écoute'} className={cn('relative flex size-16 items-center justify-center rounded-full border transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300', listening ? 'border-cyan-200 bg-cyan-400 text-slate-950 shadow-[0_0_0_12px_rgba(34,211,238,0.10),0_0_45px_rgba(34,211,238,0.45)]' : 'border-blue-300/30 bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-950/50 hover:scale-105')}>
                     {listening ? <span className="absolute inset-[-8px] animate-ping rounded-full border border-cyan-300/40" /> : null}
                     {listening ? <MicOff className="z-10 size-6" /> : <Mic className="z-10 size-6" />}
