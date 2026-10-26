@@ -32,6 +32,8 @@ jobs:
         run: bun run db:generate
       - name: Synchronize isolated CI SQLite database
         run: bunx prisma db push --skip-generate
+      - name: GitHub repository API tests
+        run: bun test tests/github-repositories.test.ts
       - name: ESLint
         run: bun run lint
       - name: TypeScript
