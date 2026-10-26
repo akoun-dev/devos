@@ -22,7 +22,7 @@ import { ProjectsView } from '@/components/views/projects-view'
 import { SettingsView } from '@/components/views/settings-view'
 import { SyncView } from '@/components/views/sync-view'
 import { TasksView } from '@/components/views/tasks-view'
-import { VoiceView } from '@/components/views/voice-view'
+import { AssistantPanel } from '@/components/assistant/assistant-panel'
 import { useVoiceAssistant } from '@/hooks/use-voice-assistant'
 import { useWorkspace } from '@/hooks/use-workspace'
 import { DEFAULT_VIEW } from '@/lib/navigation'
@@ -126,9 +126,15 @@ export function DevOSApp({ user, onLogout, onSessionExpired }: DevOSAppProps) {
       case 'notes':
         return <NotesView notes={workspace.notes} notesLoading={workspace.notesLoading} projects={workspace.projects.map((project) => ({ id: project.id, name: project.name }))} onCreate={async (payload) => { await workspace.createNote(payload) }} onUpdate={async (id, payload) => { await workspace.updateNote(id, payload) }} onDelete={async (id) => { await workspace.deleteNote(id) }} />
       case 'ai-chat':
-        return <AiChatView onUnauthorized={onSessionExpired} />
-      case 'voice':
-        return <VoiceView prefs={assistant.prefs} prefsLoading={assistant.prefsLoading} announcements={assistant.announcements} quietHours={assistant.quietHours} onSnooze={assistant.snooze} onSpeakTest={() => void assistant.speakTest()} onToggleSuspended={toggleSuspended} onViewTask={handleViewTask} />
+        return (
+          <div className="flex flex-col gap-6">
+            <AiChatView onUnauthorized={onSessionExpired} />
+            <section className="border-t border-slate-700/70 pt-5">
+              <h2 className="mb-3 text-lg font-semibold">Voix, rappels et annonces</h2>
+              <AssistantPanel prefs={assistant.prefs} prefsLoading={assistant.prefsLoading} announcements={assistant.announcements} quietHours={assistant.quietHours} onSnooze={assistant.snooze} onSpeakTest={() => void assistant.speakTest()} onToggleSuspended={toggleSuspended} onViewTask={handleViewTask} />
+            </section>
+          </div>
+        )
       case 'activity':
         return <ActivityView activity={workspace.activity} loading={workspace.activityLoading} onRefresh={workspace.refreshActivity} />
       case 'notifications':
