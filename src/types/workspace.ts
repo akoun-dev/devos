@@ -44,6 +44,10 @@ export interface Project {
   favorite: boolean
   color: string | null
   dueAt: string | null
+  sourceProvider?: string | null
+  sourceRepositoryId?: string | null
+  sourceRepositoryUrl?: string | null
+  sourceDefaultBranch?: string | null
   createdAt: string
   updatedAt: string
   /** Compteurs agrégés (renvoyés par l'API). */
