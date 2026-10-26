@@ -99,142 +99,149 @@ function AuthForm({ onAuthenticated, onLogin, onRegister }: AuthFormProps) {
   )
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4 py-10">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div
-            className="mx-auto mb-2 flex size-12 items-center justify-center rounded-xl bg-primary text-primary-foreground"
-            aria-hidden="true"
-          >
-            <Mic className="size-6" />
-          </div>
-          <CardTitle className="text-xl">DevOS</CardTitle>
-          <CardDescription>
-            Assistant vocal proactif — connectez-vous pour retrouver vos tâches et vos rappels.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="login">
-            <TabsList className="grid h-11 w-full grid-cols-2">
-              <TabsTrigger value="login" className="min-h-11 sm:min-h-9">
-                Connexion
-              </TabsTrigger>
-              <TabsTrigger value="register" className="min-h-11 sm:min-h-9">
-                Inscription
-              </TabsTrigger>
-            </TabsList>
+    // min-h-dvh + my-auto (et non justify-center) : centrage « sûr » — quand le
+    // clavier iOS / un écran paysage réduit la hauteur, l'auto-marge retombe à 0
+    // et le haut du formulaire reste atteignable au scroll (pas de contenu
+    // clippé au-dessus du viewport). min-h-dvh suit la barre dynamique Safari.
+    <div className="flex min-h-dvh flex-col items-center bg-background px-4 py-6 sm:py-10">
+      <div className="my-auto flex w-full max-w-md flex-col items-center">
+        <h1 className="sr-only">DevOS — Assistant vocal proactif</h1>
+        <Card className="w-full gap-4 py-4 sm:gap-6 sm:py-6">
+          <CardHeader className="px-4 text-center sm:px-6">
+            <div
+              className="mx-auto mb-2 flex size-12 items-center justify-center rounded-xl bg-primary text-primary-foreground"
+              aria-hidden="true"
+            >
+              <Mic className="size-6" />
+            </div>
+            <CardTitle className="text-xl">DevOS</CardTitle>
+            <CardDescription>
+              Assistant vocal proactif — connectez-vous pour retrouver vos tâches et vos rappels.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="px-4 sm:px-6">
+            <Tabs defaultValue="login">
+              <TabsList className="grid h-11 w-full grid-cols-2">
+                <TabsTrigger value="login" className="min-h-11 sm:min-h-9">
+                  Connexion
+                </TabsTrigger>
+                <TabsTrigger value="register" className="min-h-11 sm:min-h-9">
+                  Inscription
+                </TabsTrigger>
+              </TabsList>
 
-            <TabsContent value="login" className="mt-4">
-              <form
-                onSubmit={(event) => {
-                  event.preventDefault()
-                  void submit('login')
-                }}
-                className="space-y-4"
-                aria-label="Formulaire de connexion"
-              >
-                <div className="space-y-2">
-                  <Label htmlFor="login-email">Email</Label>
-                  <Input
-                    id="login-email"
-                    type="email"
-                    inputMode="email"
-                    autoComplete="email"
-                    required
-                    placeholder="vous@exemple.fr"
-                    value={email}
-                    onChange={(event) => setEmail(event.target.value)}
-                    className="h-11"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="login-password">Mot de passe</Label>
-                  <Input
-                    id="login-password"
-                    type="password"
-                    autoComplete="current-password"
-                    required
-                    value={password}
-                    onChange={(event) => setPassword(event.target.value)}
-                    className="h-11"
-                  />
-                </div>
-                <Button type="submit" className="h-11 w-full" disabled={pending !== null}>
-                  {pending === 'login' ? (
-                    <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-                  ) : null}
-                  Se connecter
-                </Button>
-              </form>
-            </TabsContent>
+              <TabsContent value="login" className="mt-4">
+                <form
+                  onSubmit={(event) => {
+                    event.preventDefault()
+                    void submit('login')
+                  }}
+                  className="space-y-4"
+                  aria-label="Formulaire de connexion"
+                >
+                  <div className="space-y-2">
+                    <Label htmlFor="login-email">Email</Label>
+                    <Input
+                      id="login-email"
+                      type="email"
+                      inputMode="email"
+                      autoComplete="email"
+                      required
+                      placeholder="vous@exemple.fr"
+                      value={email}
+                      onChange={(event) => setEmail(event.target.value)}
+                      className="h-11"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="login-password">Mot de passe</Label>
+                    <Input
+                      id="login-password"
+                      type="password"
+                      autoComplete="current-password"
+                      required
+                      value={password}
+                      onChange={(event) => setPassword(event.target.value)}
+                      className="h-11"
+                    />
+                  </div>
+                  <Button type="submit" className="h-11 w-full" disabled={pending !== null}>
+                    {pending === 'login' ? (
+                      <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+                    ) : null}
+                    Se connecter
+                  </Button>
+                </form>
+              </TabsContent>
 
-            <TabsContent value="register" className="mt-4">
-              <form
-                onSubmit={(event) => {
-                  event.preventDefault()
-                  void submit('register')
-                }}
-                className="space-y-4"
-                aria-label="Formulaire d'inscription"
-              >
-                <div className="space-y-2">
-                  <Label htmlFor="register-name">Nom (optionnel)</Label>
-                  <Input
-                    id="register-name"
-                    type="text"
-                    autoComplete="name"
-                    maxLength={80}
-                    placeholder="Jean Dupont"
-                    value={name}
-                    onChange={(event) => setName(event.target.value)}
-                    className="h-11"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="register-email">Email</Label>
-                  <Input
-                    id="register-email"
-                    type="email"
-                    inputMode="email"
-                    autoComplete="email"
-                    required
-                    placeholder="vous@exemple.fr"
-                    value={email}
-                    onChange={(event) => setEmail(event.target.value)}
-                    className="h-11"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="register-password">Mot de passe</Label>
-                  <Input
-                    id="register-password"
-                    type="password"
-                    autoComplete="new-password"
-                    required
-                    minLength={8}
-                    value={password}
-                    onChange={(event) => setPassword(event.target.value)}
-                    className="h-11"
-                    aria-describedby="register-password-help"
-                  />
-                  <p id="register-password-help" className="text-xs text-muted-foreground">
-                    8 caractères minimum.
-                  </p>
-                </div>
-                <Button type="submit" className="h-11 w-full" disabled={pending !== null}>
-                  {pending === 'register' ? (
-                    <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-                  ) : null}
-                  Créer mon compte
-                </Button>
-              </form>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
-      <p className="mt-6 max-w-md text-center text-xs text-muted-foreground">
-        Session sécurisée par cookie httpOnly · Mot de passe protégé par bcrypt
-      </p>
+              <TabsContent value="register" className="mt-4">
+                <form
+                  onSubmit={(event) => {
+                    event.preventDefault()
+                    void submit('register')
+                  }}
+                  className="space-y-4"
+                  aria-label="Formulaire d'inscription"
+                >
+                  <div className="space-y-2">
+                    <Label htmlFor="register-name">Nom (optionnel)</Label>
+                    <Input
+                      id="register-name"
+                      type="text"
+                      autoComplete="name"
+                      maxLength={80}
+                      placeholder="Jean Dupont"
+                      value={name}
+                      onChange={(event) => setName(event.target.value)}
+                      className="h-11"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="register-email">Email</Label>
+                    <Input
+                      id="register-email"
+                      type="email"
+                      inputMode="email"
+                      autoComplete="email"
+                      required
+                      placeholder="vous@exemple.fr"
+                      value={email}
+                      onChange={(event) => setEmail(event.target.value)}
+                      className="h-11"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="register-password">Mot de passe</Label>
+                    <Input
+                      id="register-password"
+                      type="password"
+                      autoComplete="new-password"
+                      required
+                      minLength={8}
+                      value={password}
+                      onChange={(event) => setPassword(event.target.value)}
+                      className="h-11"
+                      aria-describedby="register-password-help"
+                    />
+                    <p id="register-password-help" className="text-xs text-muted-foreground">
+                      8 caractères minimum.
+                    </p>
+                  </div>
+                  <Button type="submit" className="h-11 w-full" disabled={pending !== null}>
+                    {pending === 'register' ? (
+                      <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+                    ) : null}
+                    Créer mon compte
+                  </Button>
+                </form>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+        <p className="mt-6 w-full text-center text-xs text-muted-foreground">
+          Session sécurisée par cookie httpOnly · Mot de passe protégé par bcrypt
+        </p>
+      </div>
     </div>
   )
 }
@@ -278,7 +285,7 @@ export function AuthGate() {
   if (loading) {
     return (
       <div
-        className="flex min-h-screen flex-col items-center justify-center gap-3 bg-background"
+        className="flex min-h-dvh flex-col items-center justify-center gap-3 bg-background"
         role="status"
       >
         <Loader2 className="size-6 animate-spin text-muted-foreground" aria-hidden="true" />

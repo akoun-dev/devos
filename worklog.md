@@ -405,3 +405,23 @@ Stage Summary:
 - **Durcissement sécurité pré-prod livré et révisé** : rate limiting (DEBT-021 ✅) + CSP (DEBT-013 ✅) + REV-004 APPROUVÉE — toutes les conditions du verdict AUDIT-003 sont désormais soldées
 - Restant avant toute exposition prod réelle : DEBT-020 (purge des 6 comptes de démonstration) + verrouillage accès direct :3000 hors passerelle (mineur REV-004 n°1) ; EN COURS : DEBT-003 vague 2, DEBT-017 découpage UI + h1 AuthGate ; OUVERT : DEBT-018 (doc)
 - Registre dette : 22 items — **17 TRAITÉ · 2 EN COURS · 1 REPORTÉ · 1 ACCEPTÉE · 1 OUVERT** · TASKS : **17/17 — 100 %** · prochain audit : **AUDIT-004** après la prochaine feature ou avant toute exposition prod
+
+---
+Task ID: 29
+Agent: ORCHESTRATEUR PRINCIPAL (CTO) — Frontend/UX
+Task: Exigence CTO « Assure toi de la responsivité mobile de la vue de connexion » — TASK-018
+
+Work Log:
+- Analyse statique AVANT action : auth-gate.tsx (297 l. → relecture intégrale), ui/input.tsx (text-base md:text-sm → 16 px mobile = pas de zoom iOS), ui/card.tsx (CardTitle = div, CardHeader/Content px-6), ui/tabs.tsx, ui/toast.tsx (viewport mobile top full-width ✓), layout.tsx ; constat : 0 débordement horizontal mais 100vh non dynamique + centrage justify-center non « sûr » + padding 320 px généreux + page sans h1 (DEBT-017)
+- Baseline navigateur (avant) : 375 px + 320 px → hasHScroll=false, captures task29-*-before.png
+- Correctifs auth-gate.tsx (scoped, 0 composant ui/ global touché, 0 middleware — ADR-003) : (1) AuthForm wrapper min-h-screen/justify-center → **min-h-dvh + my-auto** (centrage sûr : hauteur réduite clavier iOS/paysage → auto-marges = 0, haut du formulaire atteignable au scroll) ; (2) paddings 320 px : CardHeader/CardContent px-4 sm:px-6, Card gap-4 py-4 sm:gap-6 sm:py-6, wrapper py-6 sm:py-10 ; (3) **h1 sr-only** (partie h1 DEBT-017) ; (4) écran de chargement aligné min-h-dvh
+- Gates : bun run lint → exit 0 · bunx tsc --noEmit → exit 0
+- Re-vérification navigateur (après) : 375/320/667×375/1280 → hasHScroll=false partout ; **paysage 667×375 : docH 606 > viewport 375, scroll-top → cardTop=40 px** (centrage sûr prouvé — l'ancienne implémentation clippait le haut) ; computed minHeight=100dvh ; h1 sr-only position absolute ; 8 captures before/after dans tool-results/
+- E2E mobile golden path : connexion demo@devos.test → « Bienvenue, Démonstration DevOS ! » + app shell Assistant/Tâches/Paramètres rendu — 0 erreur console ; toast mobile top full-width observé live au passage
+- Dérive environnement détectée et corrigée (transverse, consignée) : .env amputé de JWT_SECRET (auto-sauvegarde 09:16) → 500 « JWT_SECRET manquant » (garde auth.ts:36, comportement attendu) → secret 48 o régénéré dans .env (gitignored ✓) + dev server redémarré ; User table vide → seed rejoué (demo@devos.test + 3 tâches) ; 2 tentatives login consommées dans la fenêtre de rate limiting (respectée)
+- Gouvernance : TASKS.xlsx TASK-018 insérée ligne 22 (styles copiés TASK-017, TOTAL 23 = 18 tâches, STATISTIQUES 5:22) — pipeline xlsx : recalc success 0 err · audit 0 err · validate passed ; TASKS.md miroir (TASK-018 + prochaine étape) ; DEBT_REPORT DEBT-017 annoté (h1 fait, découpage restant)
+
+Stage Summary:
+- **Vue de connexion 100 % responsive et vérifiée navigateur** : 320→1280 px sans débordement, clavier iOS/paysage couverts par le centrage sûr, a11y h1 ajouté — 0 changement de contrat API ni de comportement fonctionnel
+- TASKS : **18/18 — 100 %** (TASK-018, P2, TERMINÉ) · dette inchangée 22 items (DEBT-017 : sous-item h1 soldé, découpage restant)
+- Dérive environnement restaurée (JWT_SECRET + seed) — à re-sauvegarder ; **AUDIT-004 déclenché** (règle « audit après chaque évolution ») → Task 30
