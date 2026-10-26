@@ -111,8 +111,11 @@ export async function POST(request: NextRequest) {
       select: { id: true, name: true, sourceRepositoryUrl: true, sourceDefaultBranch: true },
     });
     return json({ project }, 201);
-  } catch {
+  } catch (error) {
     // Ne jamais journaliser l'objet erreur : il peut contenir des détails upstream.
+    if (typeof error === "object" && error !== null && "code" in error && error.code === "P2002") {
+      return json({ error: "Ce dépôt est déjà associé à un projet DevOS." }, 409);
+    }
     return json({ error: "Impossible de joindre GitHub pour le moment." }, 502);
   }
 }
