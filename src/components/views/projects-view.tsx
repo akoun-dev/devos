@@ -7,7 +7,7 @@
  */
 
 import { useMemo, useState } from 'react'
-import { Archive, FolderKanban, Loader2, PlusCircle, Star, Trash2 } from 'lucide-react'
+import { Archive, ExternalLink, FolderKanban, Github, Loader2, PlusCircle, Star, Trash2 } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -230,6 +230,14 @@ export function ProjectsView({
                   {project.dueAt ? <span className="text-xs text-muted-foreground">{formatDateTimeFR(project.dueAt)}</span> : null}
                 </div>
 
+                {project.sourceRepositoryUrl ? (
+                  <a href={project.sourceRepositoryUrl} target="_blank" rel="noreferrer" className="mt-3 inline-flex min-h-11 max-w-full items-center gap-2 rounded-md border px-3 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
+                    <Github className="size-3.5 shrink-0" aria-hidden="true" />
+                    <span className="truncate">Dépôt GitHub associé</span>
+                    <ExternalLink className="size-3 shrink-0" aria-hidden="true" />
+                  </a>
+                ) : null}
+
                 <div className="mt-3">
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
                     <span>
@@ -355,6 +363,17 @@ export function ProjectsView({
                     <p className="text-xs text-muted-foreground">Restantes</p>
                   </div>
                 </div>
+                {detail.sourceRepositoryUrl ? (
+                  <div className="rounded-lg border p-3">
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Dépôt lié</p>
+                    <a href={detail.sourceRepositoryUrl} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center gap-2 break-all text-sm text-primary underline-offset-4 hover:underline">
+                      <Github className="size-4 shrink-0" aria-hidden="true" />
+                      {detail.sourceRepositoryUrl}
+                      <ExternalLink className="size-3.5 shrink-0" aria-hidden="true" />
+                    </a>
+                    {detail.sourceDefaultBranch ? <p className="mt-1 text-xs text-muted-foreground">Branche par défaut : {detail.sourceDefaultBranch}</p> : null}
+                  </div>
+                ) : null}
                 <div>
                   <p className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                     Tâches liées
