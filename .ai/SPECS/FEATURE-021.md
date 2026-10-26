@@ -1,6 +1,6 @@
 # FEATURE-021 — Vues améliorées et import GitHub par token
 
-- Statut : CONCEPTION
+- Statut : IMPLÉMENTATION PARTIELLE — validation technique en attente
 - Priorité : P1
 
 ## Objectif
