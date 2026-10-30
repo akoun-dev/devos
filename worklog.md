@@ -678,3 +678,18 @@ Stage Summary:
 - Hydratation : cause externe (extension Bitdefender), neutralisation racine appliquée (1 attribut), 0 changement backend (contrat v1.4 intact), 0 endpoint touché
 - Purge : espace CTO propre (0 conversation/artefact de test résiduel) ; captures task25-* conservées comme preuves
 - **Suite Task 40 — push + INC-004** : token CTO retransmis complet dans le canal → push `a654436..4d96c30` RÉUSSI (4 commits Task 38/40 enfin sur origin/main — le constat « push prouvé » du Task 38 est soldé) · MAIS le push a embarqué un auto-checkpoint de plateforme `4d96c30` (message UUID `5fa2a1c3-…`) réintroduisant 5 fichiers polluants jamais revus : bottom-nav.tsx (supprimé TASK-020/ADR-004 §4), read_*.txt (purgé fb83093), route.ts (archivée Task 38), tasks-manager.tsx orphelin +531 (vestige DEBT-017, référencé uniquement en commentaires task-form-dialog.tsx:4 / tasks-badges.tsx:4), dev.pid · Analyse AVANT action : 0 import réel des orphelins, tsc 0 avec fichiers présents → **revert SANS force-push `0c7a762`** (−886/1) · gates post-revert : tsc 0 · lint 0 · health 200 · GET / 200 · arbre propre · INC-004 consigné (INCIDENTS.md) + règle permanente : `git log -3` vérifié AVANT tout push (détection commits UUID/infrastructure) · commit gouvernance + push final avec preuve ls-remote publique
+
+---
+Task ID: 40-bis
+Agent: CTO (Orchestrateur Principal)
+Task: Support immédiat — toast « Connexion impossible » persistant (4ᵉ occurrence du pattern INC-003)
+
+Work Log:
+- Signalement CTO : capture d'écran du toast 401 « Email ou mot de passe incorrect » · Analyse AVANT action : inspection DB → le compte akoun@devos.test a été RE-CRÉÉ à 18:30:03 UTC avec name=« ABOA AKOUN BERNARD » (inscription via l'UI par le CTO lui-même) — mon recréage antérieur (name=Akoun) avait disparu : la base a été re-vide à ~18:23 UTC au re-provisionnement (4ᵉ occurrence du pattern INC-001/003 ; .env réécrit à 18:23:20)
+- Effet DIFFÉRÉ du provisionnement : le JWT_SECRET ajouté au fix précédent avait été effacé du .env mais survivait EN MÉMOIRE du serveur → les logins continuaient (401/200 normaux) ; un rechargement d'env ultérieur a purgé la variable → 500 « JWT_SECRET manquant » observé pendant le support (symptômes changeants 401→401→500 expliqués)
+- Remédiation : (1) JWT_SECRET régénéré dans .env (2ᵉ fois cette session) → login curl 200 + me 200 ; (2) mot de passe réinitialisé de façon CIBLÉE via .zscripts/task25_set_password.ts (nouveau script : update passwordHash UNIQUEMENT, name/profil conservés — le CTO garde son inscription) — valeur simple sans ambiguïté de copie, transmise dans le canal privé, jamais commitée
+- E2E agent-browser : login UI akoun@devos.test / nouveau mot de passe → « Bienvenue, ABOA AKOUN BERNARD ! » tableau de bord rendu (capture task40-login-ui-ok.png) · 0 erreur · navigateur fermé
+- Gouvernance : leçon mise à jour (LESSONS_LEARNED) : vérifier JWT_SECRET + état DB À CHAQUE début de session et après tout checkpoint ; INC-003/INC-004 inchangés (récurrence tracée ici)
+
+Stage Summary:
+- Le CTO dispose d'identifiants fonctionnels prouvés E2E (API + UI) · son profil d'inscription (ABOA AKOUN BERNARD) est conservé · la récurrence de perte d'état (4ᵉ) renforce la priorité du chantier « sauvegardes » AVANT toute itération à valeur de données
