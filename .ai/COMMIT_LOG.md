@@ -93,6 +93,8 @@ Détails : 0 endpoint touché (contrat v1.4 inchangé) · purge des 2 conversati
 
 Détails : diagnostic AVANT action (dev.log 401 puis 500 JWT_SECRET · inspection DB = 0 utilisateur · signatures bis_* = extension) · JWT_SECRET 48 o régénéré dans .env (jamais commité) · compte CTO recréé + mot de passe transmis dans le canal privé · E2E agent-browser complet avec purge · 0 endpoint touché (contrat v1.4 intact) · les données antérieures de la base locale sont définitivement perdues (chantier « sauvegardes » priorisé).
 
+Push Task 40 (token CTO usage inline) : `a654436..4d96c30 main -> main` — **INC-004** : le push a embarqué un auto-checkpoint de plateforme `4d96c30` (message UUID) avec 5 fichiers polluants (bottom-nav.tsx réintroduit, read_*.txt, route.ts archivée, orphelin tasks-manager.tsx +531, dev.pid) → **revert SANS force-push `0c7a762`** (−886, arbre restauré à l'état audité), gates post-revert tsc 0 · lint 0 · health 200 · GET / 200. Règle permanente adoptée : `git log -3` vérifié AVANT tout push (détection de commits UUID/infrastructure).
+
 ## Synchronisation post-session (2026-10-25)
 - Hash final du commit docs de clôture : `a8bbbc8` — session FEATURE-001 complète : **7ddb0c9 → f2485b5 → eb1a3d9 → a8bbbc8**.
 - Aucun fichier `.env` commité ; inventaire vérifié par `git status` avant chaque commit ; `git log --oneline` vérifié en fin de session.
